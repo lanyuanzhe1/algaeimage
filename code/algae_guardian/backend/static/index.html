@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>藻影卫士 · 监测面板</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: -apple-system, 'Microsoft YaHei', sans-serif; background: #0a1628; color: #e0e6f0; }
+.header { background: linear-gradient(135deg, #0d2137, #1a3a5c); padding: 20px 30px; border-bottom: 1px solid #1e4a7a; }
+.header h1 { font-size: 24px; background: linear-gradient(90deg, #4fc3f7, #00e676); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+.header span { color: #8899aa; font-size: 14px; margin-left: 15px; }
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; padding: 20px 30px; }
+.card { background: #0f2035; border: 1px solid #1a3350; border-radius: 12px; padding: 20px; }
+.card .label { color: #7a8a9a; font-size: 13px; }
+.card .value { font-size: 28px; font-weight: 600; margin-top: 6px; }
+.card .value.green { color: #00e676; }
+.card .value.yellow { color: #ffd600; }
+.card .value.orange { color: #ff9100; }
+.card .value.red { color: #ff1744; }
+.main-content { display: grid; grid-template-columns: 2fr 1fr; gap: 16px; padding: 0 30px 30px; }
+.section { background: #0f2035; border: 1px solid #1a3350; border-radius: 12px; padding: 20px; }
+.section h2 { font-size: 16px; margin-bottom: 16px; color: #4fc3f7; }
+table { width: 100%; border-collapse: collapse; font-size: 14px; }
+th { text-align: left; padding: 10px 8px; color: #7a8a9a; font-weight: 500; border-bottom: 1px solid #1a3350; }
+td { padding: 10px 8px; border-bottom: 1px solid #132a44; }
+.risk-badge { padding: 3px 10px; border-radius: 12px; font-size: 12px; font-weight: 500; }
+.risk-green { background: #003d26; color: #00e676; }
+.risk-yellow { background: #3d2e00; color: #ffd600; }
+.risk-orange { background: #3d1c00; color: #ff9100; }
+.risk-red { background: #3d0000; color: #ff1744; }
+.upload-area { border: 2px dashed #1a4a7a; border-radius: 12px; padding: 30px; text-align: center; margin: 16px 0; cursor: pointer; transition: 0.3s; }
+.upload-area:hover { border-color: #4fc3f7; background: #0d2840; }
+.upload-area input { display: none; }
+.btn { background: #0066cc; color: white; border: none; padding: 8px 20px; border-radius: 6px; cursor: pointer; font-size: 14px; }
+.btn:hover { background: #0077ee; }
+#result-panel { margin-top: 16px; display: none; }
+canvas { max-height: 250px; }
+.status-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; }
+.status-online { background: #00e676; }
+.status-offline { background: #666; }
+@media (max-width: 768px) { .main-content { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<div class="header">
+  <h1>🌊 藻影卫士 · Algae Guardian <span>有害藻华早期预警监测系统</span></h1>
+</div>
+
+<div class="grid" id="stats-grid"></div>
+
+<div class="main-content">
+  <div class="section">
+    <h2>📸 图像检测</h2>
+    <div class="upload-area" id="upload-area">
+      <p style="font-size: 40px; margin-bottom: 10px;">📷</p>
+      <p>点击上传水下显微图像</p>
+      <p style="color: #7a8a9a; font-size: 13px; margin-top: 6px;">支持 JPEG / PNG</p>
+      <input type="file" id="image-input" accept="image/jpeg,image/png">
+    </div>
+    <div style="margin-top: 12px;">
+      <label style="font-size: 13px; color: #7a8a9a;">设备ID</label>
+      <input type="text" id="device-id" value="demo-001" style="width:100%; padding:8px; background:#0a1628; border:1px solid #1a3350; border-radius:6px; color:#e0e6f0; margin-top:4px;">
+    </div>
+    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px; margin-top:8px;">
+      <div><label style="font-size:13px; color:#7a8a9a;">水温 (°C)</label><input type="number" id="env-temp" value="28" style="width:100%; padding:8px; background:#0a1628; border:1px solid #1a3350; border-radius:6px; color:#e0e6f0;"></div>
+      <div><label style="font-size:13px; color:#7a8a9a;">盐度 (psu)</label><input type="number" id="env-salinity" value="25" style="width:100%; padding:8px; background:#0a1628; border:1px solid #1a3350; border-radius:6px; color:#e0e6f0;"></div>
+    </div>
+    <div id="result-panel">
+      <h3 style="margin-top:16px; font-size:14px; color:#4fc3f7;">检测结果</h3>
+      <div id="result-details"></div>
+    </div>
+  </div>
+
+  <div class="section">
+    <h2>📊 实时状态</h2>
+    <div id="device-list"><p style="color:#7a8a9a;">加载中...</p></div>
+    <h2 style="margin-top:20px;">📈 风险趋势</h2>
+    <canvas id="trend-chart"></canvas>
+  </div>
+</div>
+
+<script>
+const API = '/api/v1';
+
+async function loadDashboard() {
+  try {
+    const res = await fetch(`${API}/dashboard/summary`);
+    const data = await res.json();
+    renderStats(data);
+    if (data.recent_detections) renderTable(data.recent_detections);
+  } catch(e) { console.error('Dashboard load error:', e); }
+}
+
+function renderStats(data) {
+  document.getElementById('stats-grid').innerHTML = `
+    <div class="card"><div class="label">监测设备</div><div class="value">${data.total_devices || 0}</div></div>
+    <div class="card"><div class="label">在线设备</div><div class="value">${data.online_devices || 0}</div></div>
+    <div class="card"><div class="label">今日告警</div><div class="value ${data.alerts_today > 0 ? 'orange' : 'green'}">${data.alerts_today || 0}</div></div>
+    <div class="card"><div class="label">当前风险</div><div class="value ${data.current_risk_level}">${riskText(data.current_risk_level)}</div></div>
+  `;
+}
+
+function riskText(level) {
+  return {green:'低风险', yellow:'注意', orange:'预警', red:'高风险'}[level] || level;
+}
+
+function renderTable(detections) {
+  const section = document.querySelector('.main-content .section:first-child');
+  let existing = document.getElementById('history-table');
+  if (!existing) {
+    const div = document.createElement('div');
+    div.id = 'history-table';
+    div.innerHTML = `<h2 style="font-size:16px; color:#4fc3f7; margin-top:20px;">📋 最近检测</h2>
+      <table><thead><tr><th>时间</th><th>设备</th><th>数量</th><th>浓度</th><th>风险</th></tr></thead><tbody id="history-body"></tbody></table>`;
+    section.appendChild(div);
+  }
+  const tbody = document.getElementById('history-body');
+  tbody.innerHTML = detections.map(d => `
+    <tr>
+      <td>${new Date(d.created_at).toLocaleTimeString()}</td>
+      <td>${d.device_id}</td>
+      <td>${d.total_count}</td>
+      <td>${d.concentration_per_ul.toFixed(1)}/μL</td>
+      <td><span class="risk-badge risk-${d.risk_level}">${riskText(d.risk_level)}</span></td>
+    </tr>`).join('');
+}
+
+// ── Upload ──
+document.getElementById('upload-area').onclick = () => document.getElementById('image-input').click();
+document.getElementById('image-input').onchange = async (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  const form = new FormData();
+  form.append('file', file);
+  form.append('device_id', document.getElementById('device-id').value || 'demo-001');
+  const temp = document.getElementById('env-temp').value;
+  if (temp) form.append('temperature', temp);
+  const sal = document.getElementById('env-salinity').value;
+  if (sal) form.append('salinity', sal);
+
+  document.getElementById('result-panel').style.display = 'block';
+  document.getElementById('result-details').innerHTML = '<p style="color:#7a8a9a;">分析中...</p>';
+
+  try {
+    const res = await fetch(`${API}/detection/upload`, { method: 'POST', body: form });
+    const data = await res.json();
+    document.getElementById('result-details').innerHTML = `
+      <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px; margin-top:12px;">
+        <div style="background:#0a1628; padding:12px; border-radius:8px;">
+          <div style="color:#7a8a9a; font-size:12px;">藻类总数</div>
+          <div style="font-size:24px; font-weight:600;">${data.total_count}</div>
+        </div>
+        <div style="background:#0a1628; padding:12px; border-radius:8px;">
+          <div style="color:#7a8a9a; font-size:12px;">浓度</div>
+          <div style="font-size:24px; font-weight:600;">${data.concentration_per_ul.toFixed(1)} <span style="font-size:14px;">cells/μL</span></div>
+        </div>
+        <div style="background:#0a1628; padding:12px; border-radius:8px;">
+          <div style="color:#7a8a9a; font-size:12px;">风险等级</div>
+          <div style="font-size:24px; font-weight:600;" class="value ${data.risk_level}">${riskText(data.risk_level)}</div>
+        </div>
+        <div style="background:#0a1628; padding:12px; border-radius:8px;">
+          <div style="color:#7a8a9a; font-size:12px;">处理耗时</div>
+          <div style="font-size:24px; font-weight:600;">${data.processing_time_ms.toFixed(1)} <span style="font-size:14px;">ms</span></div>
+        </div>
+      </div>
+      ${data.algae_composition && Object.keys(data.algae_composition).length > 0 ? `
+        <div style="margin-top:12px; padding:12px; background:#0a1628; border-radius:8px;">
+          <div style="color:#7a8a9a; font-size:12px; margin-bottom:8px;">藻类组成</div>
+          ${Object.entries(data.algae_composition).map(([k,v]) => `<span style="display:inline-block; background:#1a3350; padding:3px 10px; border-radius:12px; margin:2px; font-size:13px;">${k}: ${v}</span>`).join('')}
+        </div>` : ''}
+    `;
+    loadDashboard();
+  } catch(e) {
+    document.getElementById('result-details').innerHTML = `<p style="color:#ff1744;">检测失败: ${e.message}</p>`;
+  }
+};
+
+loadDashboard();
+setInterval(loadDashboard, 30000);
+</script>
+</body>
+</html>

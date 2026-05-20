@@ -1,0 +1,338 @@
+[
+  {
+    "image": "01_normal_mix",
+    "shape": [
+      480,
+      640,
+      3
+    ],
+    "quality_score": 0.7203,
+    "quality": "good",
+    "usable": true,
+    "contrast": 61.56,
+    "sharpness": 75642.76,
+    "brightness": 55.16,
+    "issues": [],
+    "detections": {
+      "Non-phytoplankton": 1
+    },
+    "total_detections": 1
+  },
+  {
+    "image": "02_dense_bloom",
+    "shape": [
+      480,
+      640,
+      3
+    ],
+    "quality_score": 0.684,
+    "quality": "good",
+    "usable": true,
+    "contrast": 43.92,
+    "sharpness": 23950.3,
+    "brightness": 158.2,
+    "issues": [],
+    "detections": {
+      "Other-phytoplankton": 5,
+      "Non-phytoplankton": 2
+    },
+    "total_detections": 7
+  },
+  {
+    "image": "03_clear_water",
+    "shape": [
+      480,
+      640,
+      3
+    ],
+    "quality_score": 0.7127,
+    "quality": "good",
+    "usable": true,
+    "contrast": 61.99,
+    "sharpness": 76803.9,
+    "brightness": 54.73,
+    "issues": [],
+    "detections": {
+      "Non-phytoplankton": 1
+    },
+    "total_detections": 1
+  },
+  {
+    "image": "04_turbid_water",
+    "shape": [
+      480,
+      640,
+      3
+    ],
+    "quality_score": 0.7607,
+    "quality": "good",
+    "usable": true,
+    "contrast": 67.73,
+    "sharpness": 5142.27,
+    "brightness": 114.45,
+    "issues": [],
+    "detections": {
+      "Other-phytoplankton": 1
+    },
+    "total_detections": 1
+  },
+  {
+    "image": "05_toxic_bloom",
+    "shape": [
+      480,
+      640,
+      3
+    ],
+    "quality_score": 0.7197,
+    "quality": "good",
+    "usable": true,
+    "contrast": 61.55,
+    "sharpness": 75707.68,
+    "brightness": 55.14,
+    "issues": [],
+    "detections": {
+      "Non-phytoplankton": 1
+    },
+    "total_detections": 1
+  },
+  {
+    "image": "06_polarization_raw",
+    "shape": [
+      480,
+      640,
+      3
+    ],
+    "quality_score": 0.6823,
+    "quality": "good",
+    "usable": true,
+    "contrast": 44.43,
+    "sharpness": 37329.84,
+    "brightness": 132.33,
+    "issues": [],
+    "detections": {},
+    "total_detections": 0
+  },
+  {
+    "image": "07_quality_issues",
+    "shape": [
+      480,
+      640,
+      3
+    ],
+    "quality_score": 0.197,
+    "quality": "poor",
+    "usable": false,
+    "contrast": 10.74,
+    "sharpness": 0.28,
+    "brightness": 240.15,
+    "issues": [
+      "图像模糊 (sharpness=0.3)",
+      "过曝 (brightness=240.1)"
+    ],
+    "detections": {},
+    "total_detections": 0
+  },
+  {
+    "image": "SNAP-003217-0030",
+    "shape": [
+      640,
+      640,
+      3
+    ],
+    "quality_score": 0.6989,
+    "quality": "good",
+    "usable": true,
+    "contrast": 45.65,
+    "sharpness": 6672.66,
+    "brightness": 129.63,
+    "issues": [],
+    "detections": {
+      "Other-phytoplankton": 2
+    },
+    "total_detections": 2
+  },
+  {
+    "image": "SNAP-005459-0015",
+    "shape": [
+      640,
+      640,
+      3
+    ],
+    "quality_score": 0.7018,
+    "quality": "good",
+    "usable": true,
+    "contrast": 46.32,
+    "sharpness": 12767.83,
+    "brightness": 130.35,
+    "issues": [],
+    "detections": {
+      "Woronichinia": 2,
+      "Other-phytoplankton": 3,
+      "Non-phytoplankton": 1
+    },
+    "total_detections": 6
+  },
+  {
+    "image": "SNAP-011621-0021",
+    "shape": [
+      640,
+      640,
+      3
+    ],
+    "quality_score": 0.7406,
+    "quality": "good",
+    "usable": true,
+    "contrast": 55.12,
+    "sharpness": 22380.36,
+    "brightness": 105.39,
+    "issues": [],
+    "detections": {
+      "Spiroides": 1,
+      "Woronichinia": 2,
+      "Other-phytoplankton": 5
+    },
+    "total_detections": 8
+  },
+  {
+    "image": "SNAP-011632-0022",
+    "shape": [
+      640,
+      640,
+      3
+    ],
+    "quality_score": 0.7264,
+    "quality": "good",
+    "usable": true,
+    "contrast": 52.15,
+    "sharpness": 8926.27,
+    "brightness": 131.56,
+    "issues": [],
+    "detections": {
+      "Other-phytoplankton": 5,
+      "Spiroides": 1
+    },
+    "total_detections": 6
+  },
+  {
+    "image": "SNAP-011703-0023",
+    "shape": [
+      640,
+      640,
+      3
+    ],
+    "quality_score": 0.7408,
+    "quality": "good",
+    "usable": true,
+    "contrast": 55.27,
+    "sharpness": 22368.56,
+    "brightness": 119.83,
+    "issues": [],
+    "detections": {
+      "Spiroides": 1,
+      "Other-phytoplankton": 2
+    },
+    "total_detections": 3
+  },
+  {
+    "image": "SNAP-011719-0024",
+    "shape": [
+      640,
+      640,
+      3
+    ],
+    "quality_score": 0.7418,
+    "quality": "good",
+    "usable": true,
+    "contrast": 55.34,
+    "sharpness": 21908.35,
+    "brightness": 104.06,
+    "issues": [],
+    "detections": {
+      "Spiroides": 1,
+      "Woronichinia": 1,
+      "Other-phytoplankton": 2
+    },
+    "total_detections": 4
+  },
+  {
+    "image": "SNAP-011731-0025",
+    "shape": [
+      640,
+      640,
+      3
+    ],
+    "quality_score": 0.744,
+    "quality": "good",
+    "usable": true,
+    "contrast": 55.86,
+    "sharpness": 23655.93,
+    "brightness": 105.69,
+    "issues": [],
+    "detections": {
+      "Spiroides": 1,
+      "Woronichinia": 1,
+      "Other-phytoplankton": 1
+    },
+    "total_detections": 3
+  },
+  {
+    "image": "SNAP-011826-0028",
+    "shape": [
+      640,
+      640,
+      3
+    ],
+    "quality_score": 0.7457,
+    "quality": "good",
+    "usable": true,
+    "contrast": 56.22,
+    "sharpness": 20888.28,
+    "brightness": 102.95,
+    "issues": [],
+    "detections": {
+      "Other-phytoplankton": 2,
+      "Non-phytoplankton": 1
+    },
+    "total_detections": 3
+  },
+  {
+    "image": "SNAP-011924-0030",
+    "shape": [
+      640,
+      640,
+      3
+    ],
+    "quality_score": 0.7282,
+    "quality": "good",
+    "usable": true,
+    "contrast": 52.45,
+    "sharpness": 8070.8,
+    "brightness": 124.5,
+    "issues": [],
+    "detections": {
+      "Other-phytoplankton": 1,
+      "Woronichinia": 1
+    },
+    "total_detections": 2
+  },
+  {
+    "image": "SNAP-012008-0031",
+    "shape": [
+      640,
+      640,
+      3
+    ],
+    "quality_score": 0.7334,
+    "quality": "good",
+    "usable": true,
+    "contrast": 53.4,
+    "sharpness": 17676.31,
+    "brightness": 102.4,
+    "issues": [],
+    "detections": {
+      "Other-phytoplankton": 4,
+      "Woronichinia": 1
+    },
+    "total_detections": 5
+  }
+]

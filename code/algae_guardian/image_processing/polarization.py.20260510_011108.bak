@@ -1,0 +1,176 @@
+"""Polarization image processing: Stokes reconstruction, DoLP, AoP, and enhancement."""
+import numpy as np
+from typing import Dict, Tuple, Optional
+
+
+class PolarizationProcessor:
+    """Process polarization images from DoFP camera."""
+
+    def __init__(self):
+        self.polarization_angles = [0, 45, 90, 135]  # degrees
+
+    def reconstruct_stokes(self, I0: np.ndarray, I45: np.ndarray,
+                           I90: np.ndarray, I135: np.ndarray) -> Dict[str, np.ndarray]:
+        """Reconstruct Stokes parameters from 4 polarization images.
+
+        Args:
+            I0, I45, I90, I135: Intensity images at each polarization angle
+
+        Returns:
+            Dict with S0, S1, S2, DoLP, AoP
+        """
+        S0 = I0 + I90                     # Total intensity
+        S1 = I0 - I90                     # 0°/90° difference
+        S2 = I45 - I135                   # 45°/135° difference
+
+        # Degree of Linear Polarization (DoLP)
+        denom = S0 + 1e-10
+        DoLP = np.sqrt(S1**2 + S2**2) / denom
+        DoLP = np.clip(DoLP, 0, 1)
+
+        # Angle of Polarization (AoP) in radians
+        AoP = 0.5 * np.arctan2(S2, S1)
+
+        return {
+            "S0": S0,
+            "S1": S1,
+            "S2": S2,
+            "DoLP": DoLP,
+            "AoP": AoP,
+        }
+
+    def demosaic_DoFP(self, raw: np.ndarray) -> Dict[str, np.ndarray]:
+        """Demosaic DoFP raw image into 4 polarization channels.
+
+        Assumes 2x2 superpixel pattern: [0°, 45°; 90°, 135°]
+        """
+        h, w = raw.shape
+        I0 = raw[0:h:2, 0:w:2]
+        I45 = raw[0:h:2, 1:w:2]
+        I90 = raw[1:h:2, 0:w:2]
+        I135 = raw[1:h:2, 1:w:2]
+
+        return {"I0": I0, "I45": I45, "I90": I90, "I135": I135}
+
+    def flat_field_calibrate(self, image: np.ndarray,
+                             flat: np.ndarray,
+                             dark: Optional[np.ndarray] = None) -> np.ndarray:
+        """Apply flat-field correction."""
+        corrected = image.astype(np.float32)
+        if dark is not None:
+            corrected -= dark.astype(np.float32)
+        flat_mean = np.mean(flat)
+        corrected = corrected / (flat.astype(np.float32) + 1e-10) * flat_mean
+        return np.clip(corrected, 0, 255).astype(np.uint8)
+
+    def suppress_backscatter(self, S0: np.ndarray, DoLP: np.ndarray,
+                             strength: float = 0.5) -> np.ndarray:
+        """Suppress backscatter using polarization features."""
+        backscatter = DoLP * strength
+        corrected = S0 * (1.0 - backscatter)
+        return np.clip(corrected, 0, 255).astype(np.uint8)
+
+    def polarization_enhancement(self, S0: np.ndarray, DoLP: np.ndarray,
+                                 AoP: np.ndarray,
+                                 lambda1: float = 0.3,
+                                 lambda2: float = 0.2,
+                                 lambda3: float = 0.4) -> np.ndarray:
+        """Polarization-based image enhancement using the I_enh formula.
+
+        Implements:
+            I_enh = Norm(S0 + λ1·S0 + λ2·AoP + λ3·DoLP)
+
+        where Norm(·) denotes min-max normalization to [0, 255].
+        The formula preserves total intensity while enhancing regions with
+        strong polarization response and structural edges.
+
+        Args:
+            S0: Total intensity channel (I0 + I90)
+            DoLP: Degree of Linear Polarization [0, 1]
+            AoP: Angle of Polarization (radians)
+            lambda1: S0 contribution weight (default: 0.3)
+            lambda2: AoP contribution weight (default: 0.2)
+            lambda3: DoLP contribution weight (default: 0.4)
+
+        Returns:
+            Enhanced image (uint8) with suppressed scattering and enhanced edges
+        """
+        # Normalize each component to [0, 1]
+        def normalize(x):
+            x_min, x_max = x.min(), x.max()
+            if x_max - x_min < 1e-10:
+                return np.zeros_like(x, dtype=np.float32)
+            return (x.astype(np.float32) - x_min) / (x_max - x_min)
+
+        S0_norm = normalize(S0)
+        DoLP_norm = normalize(DoLP)
+        AoP_norm = normalize(AoP)
+
+        # I_enh formula: S0 + λ1·S0 + λ2·AoP + λ3·DoLP
+        I_enh = (S0_norm + lambda1 * S0_norm +
+                 lambda2 * AoP_norm + lambda3 * DoLP_norm)
+
+        # Re-normalize to [0, 255]
+        I_enh = normalize(I_enh)
+        return (I_enh * 255).astype(np.uint8)
+
+    def compute_polarization_features(self, stokes: Dict[str, np.ndarray]) -> Dict[str, np.ndarray]:
+        """Compute additional polarization features for analysis.
+
+        Returns dict with enhanced features useful for algae edge detection.
+        """
+        S0 = stokes["S0"]
+        S1 = stokes["S1"]
+        S2 = stokes["S2"]
+        DoLP = stokes["DoLP"]
+
+        features = {}
+
+        # Polarization difference
+        features["polar_diff"] = np.abs(S1) + np.abs(S2)
+
+        # DoLP-weighted intensity (highlights polarized targets)
+        features["doLP_weighted"] = S0 * (1.0 + DoLP)
+
+        # Edge enhancement via polarization contrast
+        from scipy.ndimage import sobel
+        edge_DoLP = np.hypot(sobel(DoLP, axis=0), sobel(DoLP, axis=1))
+        features["edge_enhanced"] = S0 * (1.0 + 0.5 * edge_DoLP)
+
+        return features
+
+    def process_polarization_raw(self, raw_image: np.ndarray) -> Dict[str, np.ndarray]:
+        """Full pipeline: demosaic -> Stokes -> DoLP/AoP -> backscatter suppression."""
+        channels = self.demosaic_DoFP(raw_image)
+        stokes = self.reconstruct_stokes(**channels)
+        stokes["corrected"] = self.suppress_backscatter(stokes["S0"], stokes["DoLP"])
+        stokes["enhanced"] = self.polarization_enhancement(
+            stokes["S0"], stokes["DoLP"], stokes["AoP"]
+        )
+        return stokes
+
+    def process_rgb_from_raw(self, raw_image: np.ndarray) -> np.ndarray:
+        """Convert raw DoFP image to an enhanced 3-channel RGB image.
+
+        Constructs a 3-channel image from:
+        - Channel 0: S0 (total intensity)
+        - Channel 1: Polarization-enhanced (I_enh)
+        - Channel 2: Backscatter-corrected
+
+        This output is ready for YOLO inference.
+        """
+        channels = self.demosaic_DoFP(raw_image)
+        stokes = self.reconstruct_stokes(**channels)
+        S0 = stokes["S0"]
+        DoLP = stokes["DoLP"]
+        AoP = stokes["AoP"]
+
+        # Build 3-channel output
+        enhanced = self.polarization_enhancement(S0, DoLP, AoP)
+        corrected = self.suppress_backscatter(S0, DoLP)
+
+        # Normalize S0 to uint8
+        S0_norm = ((S0 - S0.min()) / (S0.max() - S0.min() + 1e-10) * 255).astype(np.uint8)
+
+        rgb = np.stack([S0_norm, enhanced, corrected], axis=-1)
+        return rgb

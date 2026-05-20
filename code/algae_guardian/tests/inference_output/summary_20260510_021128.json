@@ -1,0 +1,127 @@
+[
+  {
+    "image": "01_normal_mix",
+    "shape": [
+      480,
+      640,
+      3
+    ],
+    "quality_score": 0.7203,
+    "quality": "good",
+    "usable": true,
+    "contrast": 61.56,
+    "sharpness": 75642.76,
+    "brightness": 55.16,
+    "issues": [],
+    "detections": {},
+    "total_detections": 0
+  },
+  {
+    "image": "02_dense_bloom",
+    "shape": [
+      480,
+      640,
+      3
+    ],
+    "quality_score": 0.684,
+    "quality": "good",
+    "usable": true,
+    "contrast": 43.92,
+    "sharpness": 23950.3,
+    "brightness": 158.2,
+    "issues": [],
+    "detections": {},
+    "total_detections": 0
+  },
+  {
+    "image": "03_clear_water",
+    "shape": [
+      480,
+      640,
+      3
+    ],
+    "quality_score": 0.7127,
+    "quality": "good",
+    "usable": true,
+    "contrast": 61.99,
+    "sharpness": 76803.9,
+    "brightness": 54.73,
+    "issues": [],
+    "detections": {},
+    "total_detections": 0
+  },
+  {
+    "image": "04_turbid_water",
+    "shape": [
+      480,
+      640,
+      3
+    ],
+    "quality_score": 0.7607,
+    "quality": "good",
+    "usable": true,
+    "contrast": 67.73,
+    "sharpness": 5142.27,
+    "brightness": 114.45,
+    "issues": [],
+    "detections": {},
+    "total_detections": 0
+  },
+  {
+    "image": "05_toxic_bloom",
+    "shape": [
+      480,
+      640,
+      3
+    ],
+    "quality_score": 0.7197,
+    "quality": "good",
+    "usable": true,
+    "contrast": 61.55,
+    "sharpness": 75707.68,
+    "brightness": 55.14,
+    "issues": [],
+    "detections": {},
+    "total_detections": 0
+  },
+  {
+    "image": "06_polarization_raw",
+    "shape": [
+      480,
+      640,
+      3
+    ],
+    "quality_score": 0.6823,
+    "quality": "good",
+    "usable": true,
+    "contrast": 44.43,
+    "sharpness": 37329.84,
+    "brightness": 132.33,
+    "issues": [],
+    "detections": {},
+    "total_detections": 0
+  },
+  {
+    "image": "07_quality_issues",
+    "shape": [
+      480,
+      640,
+      3
+    ],
+    "quality_score": 0.197,
+    "quality": "poor",
+    "usable": false,
+    "contrast": 10.74,
+    "sharpness": 0.28,
+    "brightness": 240.15,
+    "issues": [
+      "图像模糊 (sharpness=0.3)",
+      "过曝 (brightness=240.1)"
+    ],
+    "detections": {
+      "sports ball": 2,
+      "frisbee": 1
+    },
+    "total_detections": 3
+  }
+]

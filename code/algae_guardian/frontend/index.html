@@ -1,0 +1,685 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>藻影卫士 · 有害藻华早期预警平台</title>
+<style>
+:root {
+  --bg: #f4f8fc; --panel: #fff; --panel-2: #f7fbff;
+  --line: #d8e5f2; --line-soft: rgba(15,40,70,.08);
+  --text: #162235; --muted: #65778b;
+  --blue: #1976d2; --cyan: #0891b2; --green: #16a34a;
+  --yellow: #ca8a04; --orange: #ea580c; --red: #dc2626;
+  --shadow: 0 18px 46px rgba(28,74,121,.12);
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0; min-height: 100vh;
+  font-family: "Microsoft YaHei","PingFang SC",Arial,sans-serif;
+  color: var(--text);
+  background: linear-gradient(135deg, rgba(25,118,210,.08), transparent 34rem),
+              linear-gradient(180deg, #fff 0%, var(--bg) 44%, #edf5fb 100%);
+}
+button { cursor: pointer; font: inherit; }
+.app { width: min(1440px, calc(100vw - 32px)); margin: 0 auto; padding: 18px 0 28px; }
+
+/* ── Top Bar ── */
+.topbar { display: flex; align-items: center; justify-content: space-between; min-height: 68px; padding: 0 6px; gap: 18px; }
+.brand { display: flex; align-items: center; gap: 14px; }
+.brand-mark {
+  width: 42px; height: 42px; display: grid; place-items: center;
+  border: 1px solid rgba(67,183,255,.6);
+  background: linear-gradient(145deg, rgba(67,183,255,.2), rgba(57,215,200,.12));
+  border-radius: 8px; color: var(--blue); font-weight: 800; font-size: 20px;
+}
+.brand h1 { margin: 0; font-size: clamp(22px,2vw,30px); }
+.brand .subtitle { margin: 5px 0 0; color: var(--muted); font-size: 13px; }
+.brand .subtitle strong { color: var(--cyan); }
+.top-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.status-pill, .btn {
+  height: 36px; border-radius: 8px; border: 1px solid var(--line);
+  color: var(--text); background: rgba(255,255,255,.86);
+  display: inline-flex; align-items: center; gap: 8px; padding: 0 12px; white-space: nowrap;
+}
+.status-dot { width: 8px; height: 8px; border-radius: 99px; background: var(--green); box-shadow: 0 0 12px rgba(22,163,74,.35); }
+.btn-primary { background: linear-gradient(180deg, rgba(25,118,210,.12), rgba(25,118,210,.06)); border-color: rgba(25,118,210,.34); }
+.btn-primary:hover, .tab:hover { border-color: rgba(25,118,210,.7); transform: translateY(-1px); }
+
+/* ── Metrics ── */
+.metrics { display: grid; grid-template-columns: repeat(5, minmax(0,1fr)); gap: 12px; margin-top: 12px; }
+.metric {
+  min-height: 94px; border-radius: 8px; padding: 15px 16px; position: relative; overflow: hidden;
+  background: linear-gradient(180deg, rgba(255,255,255,.98), rgba(247,251,255,.98));
+  border: 1px solid var(--line); box-shadow: var(--shadow);
+}
+.metric::after { content: ""; position: absolute; inset: auto 14px 0 14px; height: 2px; background: linear-gradient(90deg, transparent, rgba(25,118,210,.42), transparent); opacity: .5; }
+.metric span { display: block; color: var(--muted); font-size: 13px; }
+.metric strong { display: block; margin-top: 8px; font-size: 28px; line-height: 1.1; }
+.metric small { color: var(--muted); font-size: 12px; }
+.blink { animation: pulse 1.2s infinite; }
+@keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: .5; } }
+
+/* ── Pipeline ── */
+.pipeline-bar { display: flex; align-items: center; justify-content: space-between; gap: 4px; margin-top: 14px; padding: 10px 16px; background: linear-gradient(180deg, rgba(255,255,255,.96), rgba(247,251,255,.96)); border: 1px solid var(--line); border-radius: 8px; box-shadow: var(--shadow); }
+.pipe-step { display: flex; align-items: center; gap: 8px; flex: 1; min-width: 0; }
+.pipe-step .num { width: 26px; height: 26px; border-radius: 99px; display: grid; place-items: center; font-size: 12px; font-weight: 800; background: var(--line-soft); color: var(--muted); flex-shrink: 0; }
+.pipe-step.active .num { background: linear-gradient(135deg, var(--blue), var(--cyan)); color: #fff; box-shadow: 0 0 16px rgba(25,118,210,.35); }
+.pipe-step .info strong { display: block; font-size: 13px; }
+.pipe-step .info small { color: var(--muted); font-size: 11px; }
+.pipe-arrow { color: var(--line); font-size: 18px; flex-shrink: 0; margin: 0 2px; }
+
+/* ── Layout ── */
+.layout { display: grid; grid-template-columns: 300px minmax(0,1fr) 340px; gap: 14px; margin-top: 14px; }
+.panel { border-radius: 8px; min-width: 0; background: linear-gradient(180deg, rgba(255,255,255,.98), rgba(247,251,255,.98)); border: 1px solid var(--line); box-shadow: var(--shadow); }
+.panel-head { min-height: 54px; padding: 14px 16px 0; display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.panel-title { margin: 0; font-size: 16px; font-weight: 700; }
+.panel-subtitle { margin: 5px 0 0; color: var(--muted); font-size: 12px; }
+
+/* ── Site List ── */
+.site-list { padding: 10px; display: grid; gap: 10px; }
+.site-card {
+  width: 100%; text-align: left; color: var(--text); border-radius: 8px; padding: 12px;
+  background: linear-gradient(180deg, rgba(255,255,255,.98), rgba(247,251,255,.98));
+  border: 1px solid var(--line); box-shadow: var(--shadow); transition: .18s;
+}
+.site-card.active { border-color: rgba(25,118,210,.72); background: linear-gradient(180deg, rgba(25,118,210,.1), rgba(255,255,255,.98)); }
+.site-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.site-name { font-weight: 700; font-size: 14px; }
+.site-meta { margin-top: 8px; color: var(--muted); font-size: 12px; line-height: 1.6; }
+.site-trend { display: flex; align-items: center; gap: 4px; margin-top: 6px; font-size: 12px; }
+.trend-up { color: var(--red); } .trend-down { color: var(--green); } .trend-flat { color: var(--muted); }
+
+.risk-badge { display: inline-flex; align-items: center; justify-content: center; min-width: 56px; height: 24px; padding: 0 9px; border-radius: 7px; border: 1px solid currentColor; font-size: 12px; font-weight: 700; }
+.risk-green { color: var(--green); background: rgba(74,222,128,.1); }
+.risk-yellow { color: var(--yellow); background: rgba(250,204,21,.1); }
+.risk-orange { color: var(--orange); background: rgba(251,146,60,.1); }
+.risk-red { color: var(--red); background: rgba(251,78,93,.12); }
+
+/* ── Tabs & Microscope ── */
+.tabs { display: flex; gap: 8px; padding: 0 16px 12px; border-bottom: 1px solid var(--line-soft); }
+.tab, .risk-filter { height: 34px; padding: 0 12px; color: var(--muted); border: 1px solid var(--line); border-radius: 8px; background: rgba(247,251,255,.86); transition: .18s; }
+.tab.active, .risk-filter.active { color: var(--text); border-color: rgba(25,118,210,.72); background: rgba(25,118,210,.1); }
+.monitor { padding: 14px 16px 16px; }
+.microscope {
+  position: relative; min-height: 390px; border: 1px solid rgba(25,118,210,.2);
+  border-radius: 8px; overflow: hidden; background-color: #0a1628;
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.12), 0 0 60px rgba(25,118,210,.08);
+  display: flex; align-items: center; justify-content: center;
+}
+.scope-image { display: block; width: 100%; height: 100%; object-fit: contain; position: absolute; inset: 0; }
+.scope-info {
+  position: absolute; top: 12px; left: 12px; right: 12px; display: flex;
+  justify-content: space-between; gap: 10px; color: #d8f6ff; font-size: 12px; z-index: 2;
+}
+.scope-info span { padding: 6px 8px; border: 1px solid rgba(255,255,255,.14); border-radius: 7px; background: rgba(4,12,21,.58); backdrop-filter: blur(10px); }
+.scope-grid {
+  position: absolute; inset: 0; display: grid; grid-template-columns: 1fr 1fr 1fr;
+  gap: 0; z-index: 1; opacity: 0; transition: opacity .3s; padding: 12px;
+}
+.scope-grid.show { opacity: 1; }
+.microscope:not(.polar-view) .scope-grid { display: none; }
+.scope-grid img { width: 100%; height: 100%; object-fit: contain; border: 1px solid rgba(255,255,255,.1); }
+.scope-grid .polar-label { position: absolute; color: #d8f6ff; font-size: 11px; background: rgba(4,12,21,.7); padding: 2px 6px; border-radius: 4px; backdrop-filter: blur(4px); }
+
+.result-grid { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 10px; margin-top: 12px; }
+.mini-card { border: 1px solid var(--line); border-radius: 8px; background: rgba(247,251,255,.72); padding: 12px; min-height: 78px; }
+.mini-card span { color: var(--muted); font-size: 12px; }
+.mini-card strong { display: block; margin-top: 8px; font-size: 21px; line-height: 1.1; }
+
+.split { display: grid; grid-template-columns: 1.1fr .9fr; gap: 14px; margin-top: 14px; }
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+th, td { padding: 11px 8px; border-bottom: 1px solid var(--line-soft); text-align: left; }
+th { color: var(--muted); font-weight: 500; }
+.chart { height: 220px; padding: 12px 10px 8px; border: 1px solid var(--line); border-radius: 8px; background: linear-gradient(rgba(25,118,210,.08) 1px, transparent 1px), linear-gradient(90deg, rgba(25,118,210,.08) 1px, transparent 1px), rgba(247,251,255,.74); background-size: 100% 25%, 14.2% 100%, auto; }
+.chart svg { width: 100%; height: 100%; display: block; }
+.chart-labels { display: grid; grid-template-columns: repeat(5,1fr); gap: 6px; margin-top: 10px; font-size: 12px; color: var(--muted); }
+.legend { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; color: var(--muted); font-size: 12px; }
+.legend i { display: inline-block; width: 10px; height: 10px; border-radius: 99px; margin-right: 5px; vertical-align: -1px; }
+
+/* ── Right Stack ── */
+.right-stack { display: grid; gap: 14px; }
+.ops-list, .alarm-list { padding: 10px 16px 16px; display: grid; gap: 10px; }
+.ops-item, .alarm-item { display: flex; align-items: center; justify-content: space-between; gap: 12px; border: 1px solid var(--line-soft); border-radius: 8px; padding: 10px; background: rgba(247,251,255,.72); font-size: 13px; }
+.bar { width: 96px; height: 8px; overflow: hidden; border-radius: 999px; background: rgba(25,118,210,.12); }
+.bar > i { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg, var(--cyan), var(--blue)); }
+.risk-filters { display: flex; flex-wrap: wrap; gap: 8px; padding: 0 16px 8px; }
+.alarm-suggest { margin-top: 6px; padding: 4px 8px; border-radius: 5px; font-size: 11px; background: rgba(25,118,210,.06); border: 1px solid var(--line-soft); color: var(--muted); }
+
+/* ── Data Loop (Key Feature) ── */
+.loop-flow { padding: 10px 16px 4px; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.loop-node {
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
+  padding: 10px 6px; border: 2px solid var(--line-soft); border-radius: 8px;
+  background: rgba(247,251,255,.72); text-align: center; font-size: 12px; transition: .2s;
+}
+.loop-node.done { border-color: rgba(22,163,74,.4); background: rgba(22,163,74,.04); }
+.loop-node .dot { width: 28px; height: 28px; border-radius: 99px; display: grid; place-items: center; font-size: 14px; font-weight: 800; background: var(--line-soft); color: var(--muted); }
+.loop-node.done .dot { background: var(--green); color: #fff; }
+.loop-node label { font-weight: 600; font-size: 13px; }
+.loop-stats { padding: 4px 16px 10px; display: flex; gap: 12px; font-size: 12px; color: var(--muted); justify-content: center; }
+.loop-stats strong { color: var(--cyan); }
+.footer-actions { display: flex; gap: 10px; padding: 0 16px 16px; }
+.feedback-toast {
+  position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
+  padding: 12px 24px; border-radius: 8px; background: #162235; color: #fff;
+  font-size: 14px; z-index: 100; opacity: 0; transition: opacity .3s;
+  box-shadow: 0 8px 30px rgba(0,0,0,.3);
+}
+.feedback-toast.show { opacity: 1; }
+.feedback-toast.ok { border-left: 4px solid var(--green); }
+.feedback-toast.err { border-left: 4px solid var(--red); }
+
+/* ── Modal ── */
+.modal { position: fixed; inset: 0; display: none; align-items: center; justify-content: center; padding: 20px; background: rgba(0,0,0,.58); z-index: 20; }
+.modal.show { display: flex; }
+.modal-card { width: min(560px,100%); border: 1px solid rgba(25,118,210,.28); border-radius: 8px; background: #fff; box-shadow: 0 30px 90px rgba(28,74,121,.22); padding: 22px; }
+.modal-card h2 { margin: 0 0 12px; font-size: 20px; }
+.modal-card p { margin: 8px 0; color: var(--muted); line-height: 1.7; }
+.modal-card .btn { margin-top: 16px; }
+
+@media (max-width:1200px) {
+  .metrics { grid-template-columns: repeat(3,minmax(0,1fr)); }
+  .layout { grid-template-columns: 280px minmax(0,1fr); }
+  .right-stack { grid-column: 1/-1; grid-template-columns: repeat(3,minmax(0,1fr)); }
+}
+@media (max-width:900px) {
+  .app { width: min(100%-20px,720px); }
+  .metrics,.layout,.split,.right-stack,.result-grid { grid-template-columns:1fr; }
+  .microscope { min-height: 330px; }
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <!-- Top Bar -->
+  <header class="topbar">
+    <div class="brand">
+      <div class="brand-mark">藻</div>
+      <div>
+        <h1>藻影卫士 · 有害藻华早期预警平台</h1>
+        <p class="subtitle">偏振暗场显微成像 · YOLO识别 · 环境因子融合 · <strong>数据闭环</strong></p>
+      </div>
+    </div>
+    <div class="top-actions">
+      <div class="status-pill"><i class="status-dot"></i><span id="backendStatus">检查连接...</span></div>
+      <button class="btn" onclick="refreshData()">刷新数据</button>
+      <button class="btn btn-primary" onclick="openReport()">导出报告</button>
+    </div>
+  </header>
+
+  <!-- Metrics -->
+  <section class="metrics" id="metrics"></section>
+
+  <!-- Pipeline Bar -->
+  <div class="pipeline-bar" id="pipelineBar">
+    <div class="pipe-step active"><span class="num">1</span><div class="info"><strong>偏振暗场采集</strong><small>DoFP相机 · 多角度</small></div></div>
+    <span class="pipe-arrow">→</span>
+    <div class="pipe-step"><span class="num">2</span><div class="info"><strong>Stokes重建</strong><small>S₀ / S₁ / S₂ · RDN</small></div></div>
+    <span class="pipe-arrow">→</span>
+    <div class="pipe-step"><span class="num">3</span><div class="info"><strong>图像增强</strong><small>去散射 · 对比度</small></div></div>
+    <span class="pipe-arrow">→</span>
+    <div class="pipe-step"><span class="num">4</span><div class="info"><strong>YOLO识别计数</strong><small>分类 · 框选 · 浓度</small></div></div>
+    <span class="pipe-arrow">→</span>
+    <div class="pipe-step"><span class="num">5</span><div class="info"><strong>融合预警</strong><small>环境因子 · 四级预警</small></div></div>
+  </div>
+
+  <!-- Main Layout -->
+  <section class="layout">
+    <!-- Left: Site List -->
+    <aside class="panel">
+      <div class="panel-head"><div><h2 class="panel-title">设备管理 · 多点位监测</h2><p class="panel-subtitle">点击点位切换实时数据</p></div></div>
+      <div class="site-list" id="siteList"></div>
+    </aside>
+
+    <!-- Center: Monitor -->
+    <section class="panel">
+      <div class="panel-head">
+        <div><h2 class="panel-title" id="currentSiteTitle">实时监测</h2><p class="panel-subtitle" id="currentSiteMeta"></p></div>
+        <span class="risk-badge" id="currentRisk">风险</span>
+      </div>
+      <div class="tabs">
+        <button class="tab active" data-view="raw">原始图像</button>
+        <button class="tab" data-view="enhanced">增强图像</button>
+        <button class="tab" data-view="detect">识别结果</button>
+        <button class="tab" data-view="polar">偏振中间结果</button>
+      </div>
+      <div class="monitor">
+        <div class="microscope" id="microscope">
+          <img id="microscopeImg" class="scope-image" src="/pic/raw_microscope.jpg" alt="显微图像">
+          <div class="scope-info">
+            <span id="scopeMode">RAW · 20x · 1mm视场</span>
+            <span id="scopeTime">采集时间 --:--:--</span>
+          </div>
+          <div class="scope-grid" id="polarGrid">
+            <div style="position:relative; grid-column:1/2;">
+              <span class="polar-label" style="top:6px;left:6px;">S₀ / S₁ / S₂</span>
+              <img src="/pic/stokes_preview.jpg" alt="Stokes" style="border-radius:4px;">
+            </div>
+            <div style="position:relative; grid-column:2/3;">
+              <span class="polar-label" style="top:6px;left:6px;">AoP</span>
+              <img src="/pic/aop_preview.jpg" alt="AoP" style="border-radius:4px;">
+            </div>
+            <div style="position:relative; grid-column:3/4;">
+              <span class="polar-label" style="top:6px;left:6px;">DoLP</span>
+              <img src="/pic/dolp_preview.jpg" alt="DoLP" style="border-radius:4px;">
+            </div>
+          </div>
+        </div>
+        <div class="result-grid" id="resultGrid"></div>
+        <div class="split">
+          <div>
+            <div class="panel-head" style="padding:12px 0 0;"><div><h2 class="panel-title">藻种识别结果</h2><p class="panel-subtitle">YOLO检测输出 · 类别 · 数量 · 置信度</p></div></div>
+            <table><thead><tr><th>藻种</th><th>数量</th><th>占比</th><th>置信度</th><th>风险</th></tr></thead><tbody id="speciesTable"></tbody></table>
+          </div>
+          <div>
+            <div class="panel-head" style="padding:12px 0 0;"><div><h2 class="panel-title">数据汇流</h2><p class="panel-subtitle">环境因子 + 生物趋势</p></div></div>
+            <div class="chart" id="chart"></div>
+            <div class="chart-labels"><span>00:00</span><span>06:00</span><span>12:00</span><span>18:00</span><span>24:00</span></div>
+            <div class="legend"><span><i style="background:var(--blue);"></i>水温</span><span><i style="background:var(--cyan);"></i>叶绿素</span><span><i style="background:var(--orange);"></i>浊度</span><span><i style="background:#a78bfa;"></i>溶解氧</span></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Right Stack -->
+    <aside class="right-stack">
+      <section class="panel">
+        <div class="panel-head"><div><h2 class="panel-title">运维状态</h2><p class="panel-subtitle">设备健康 · 维护提示</p></div></div>
+        <div class="ops-list" id="opsList"></div>
+      </section>
+      <section class="panel">
+        <div class="panel-head"><div><h2 class="panel-title">风险预警</h2><p class="panel-subtitle">按风险等级筛选 · 含处置建议</p></div></div>
+        <div class="risk-filters"><button class="risk-filter active" data-risk="all">全部</button><button class="risk-filter" data-risk="red">红色</button><button class="risk-filter" data-risk="orange">橙色</button><button class="risk-filter" data-risk="yellow">黄色</button><button class="risk-filter" data-risk="green">绿色</button></div>
+        <div class="alarm-list" id="alarmList"></div>
+      </section>
+
+      <!-- ═══ Data Loop (Functional) ═══ -->
+      <section class="panel">
+        <div class="panel-head"><div><h2 class="panel-title">数据闭环</h2><p class="panel-subtitle">采集 → 识别 → 复核 → 再训练</p></div></div>
+        <div class="loop-flow">
+          <div class="loop-node done" style="grid-column:1;grid-row:1;">
+            <span class="dot">✓</span><label>采集</label>
+            <small style="color:var(--muted);">偏振暗场 · 环境因子</small>
+          </div>
+          <div class="loop-node done" style="grid-column:2;grid-row:1;">
+            <span class="dot">✓</span><label>识别</label>
+            <small style="color:var(--muted);">YOLO分类 · 浓度估算</small>
+          </div>
+          <div class="loop-node" id="loopReview" style="grid-column:1;grid-row:2;">
+            <span class="dot">3</span><label>复核</label>
+            <small id="loopReviewStatus" style="color:var(--muted);">等待人工确认</small>
+          </div>
+          <div class="loop-node" id="loopTrain" style="grid-column:2;grid-row:2;">
+            <span class="dot">4</span><label>再训练</label>
+            <small id="loopTrainStatus" style="color:var(--muted);">待加入训练样本池</small>
+          </div>
+        </div>
+        <div class="loop-stats">
+          <span>已复核: <strong id="statReviewed">0</strong></span>
+          <span>·</span>
+          <span>训练池: <strong id="statTraining">0</strong></span>
+          <span>·</span>
+          <span>存储: <code id="statDir" style="font-size:11px;">backend/data/reviewed/</code></span>
+        </div>
+        <div class="footer-actions">
+          <button class="btn btn-primary" id="reviewBtn">人工复核</button>
+          <button class="btn" id="trainBtn">加入训练集</button>
+        </div>
+      </section>
+    </aside>
+  </section>
+</div>
+
+<!-- Toast -->
+<div class="feedback-toast" id="toast"></div>
+
+<!-- Report Modal -->
+<div class="modal" id="reportModal">
+  <div class="modal-card">
+    <h2>藻影卫士监测报告摘要</h2>
+    <p id="reportText"></p>
+    <p id="reportSuggestion"></p>
+    <button class="btn btn-primary" id="closeModal">关闭</button>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════
+//  State
+// ═══════════════════════════════════════════
+const riskMap = {
+  green:  { text: "绿色", label: "低风险", suggest: "正常监测，记录基线" },
+  yellow: { text: "黄色", label: "注意",   suggest: "提醒复核，增加采样频率" },
+  orange: { text: "橙色", label: "预警",   suggest: "建议现场确认并准备处置" },
+  red:    { text: "红色", label: "高风险", suggest: "推送报警，形成应急报告" },
+};
+
+const SITES = [
+  { id:"AQ-01", name:"海洋牧场养殖池 A1", scene:"水产养殖", location:"近岸示范区 · 2.1m", risk:"orange",
+    count:1247, concentration:856, confidence:89, sample:142,
+    trend:[28,34,41,48,61,72,83], trendDir:"up",
+    env:{ temp:29.2, salinity:25.8, turbidity:18.4, chlorophyll:31.7, oxygen:6.1 },
+    species:[
+      ["球形棕囊藻",487,"39%",91,"red"],["微囊藻",312,"25%",87,"orange"],
+      ["小球藻",268,"21%",82,"green"],["直链藻",180,"14%",79,"yellow"]
+    ],
+    ops:{ camera:96, light:91, network:88, power:82, window:72 }
+  },
+  { id:"RS-03", name:"水库取水口 3号", scene:"水源地", location:"岸基旁路 · 1.4m", risk:"yellow",
+    count:642, concentration:421, confidence:86, sample:98,
+    trend:[19,20,22,24,28,31,35], trendDir:"up",
+    env:{ temp:24.8, salinity:1.2, turbidity:12.1, chlorophyll:18.5, oxygen:7.2 },
+    species:[
+      ["小球藻",246,"38%",88,"green"],["微囊藻",204,"32%",84,"yellow"],
+      ["直链藻",128,"20%",81,"yellow"],["球形棕囊藻",64,"10%",77,"orange"]
+    ],
+    ops:{ camera:94, light:87, network:92, power:89, window:84 }
+  },
+  { id:"CW-02", name:"核电冷源取水口", scene:"工业取水", location:"固定支架 · 3.5m", risk:"red",
+    count:2186, concentration:1398, confidence:92, sample:211,
+    trend:[44,58,71,89,116,141,163], trendDir:"up",
+    env:{ temp:30.1, salinity:29.4, turbidity:26.8, chlorophyll:46.2, oxygen:5.4 },
+    species:[
+      ["球形棕囊藻",1024,"47%",93,"red"],["微囊藻",526,"24%",89,"orange"],
+      ["直链藻",392,"18%",85,"orange"],["小球藻",244,"11%",81,"green"]
+    ],
+    ops:{ camera:90, light:88, network:76, power:79, window:58 }
+  },
+  { id:"CO-05", name:"近岸巡测点 5号", scene:"近岸水质", location:"浮标接入 · 1.8m", risk:"green",
+    count:318, concentration:203, confidence:84, sample:67,
+    trend:[13,14,15,14,18,19,20], trendDir:"up",
+    env:{ temp:23.9, salinity:27.1, turbidity:8.7, chlorophyll:11.2, oxygen:7.8 },
+    species:[
+      ["小球藻",158,"50%",86,"green"],["直链藻",86,"27%",80,"green"],
+      ["微囊藻",49,"15%",76,"yellow"],["球形棕囊藻",25,"8%",73,"yellow"]
+    ],
+    ops:{ camera:98, light:95, network:90, power:86, window:91 }
+  }
+];
+
+const ALARMS = [
+  { risk:"red", title:"冷源取水口藻密度快速上升", site:"核电冷源取水口", time:"11:28", detail:"球形棕囊藻连续三次超过红色阈值", suggest:"推送报警，形成应急报告" },
+  { risk:"orange", title:"养殖池出现橙色预警", site:"海洋牧场养殖池 A1", time:"10:46", detail:"叶绿素与浊度同步升高", suggest:"建议现场确认并准备处置" },
+  { risk:"yellow", title:"水库取水口微囊藻抬升", site:"水库取水口 3号", time:"09:30", detail:"增长速率高于近7日均值", suggest:"提醒复核，增加采样频率" },
+  { risk:"green", title:"近岸巡测点运行平稳", site:"近岸巡测点 5号", time:"08:12", detail:"藻密度处于背景水平", suggest:"正常监测，记录基线" },
+  { risk:"orange", title:"视窗清洁度下降", site:"核电冷源取水口", time:"07:54", detail:"建议安排维护人员清洁成像窗口", suggest:"建议现场确认并准备处置" },
+];
+
+let currentSite = SITES[0];
+let currentView = "raw";
+let currentFilter = "all";
+let reviewDone = false;
+let addedToTraining = false;
+let lastReviewId = null;
+
+const $ = s => document.querySelector(s);
+const $$ = s => Array.from(document.querySelectorAll(s));
+
+// ═══════════════════════════════════════════
+//  Backend communication
+// ═══════════════════════════════════════════
+const API = "/api/v1";
+
+async function checkBackend() {
+  try {
+    const r = await fetch("/health");
+    if (r.ok) {
+      $("#backendStatus").textContent = "系统在线";
+      document.querySelector(".status-dot").style.background = "var(--green)";
+    }
+  } catch(e) {
+    $("#backendStatus").textContent = "后端离线";
+    document.querySelector(".status-dot").style.background = "var(--red)";
+  }
+}
+
+async function fetchReviewStats() {
+  try {
+    const r = await fetch(`${API}/review/stats`);
+    const d = await r.json();
+    $("#statReviewed").textContent = d.total_reviewed || 0;
+    $("#statTraining").textContent = d.total_training || 0;
+    return d;
+  } catch(e) { return { total_reviewed: 0, total_training: 0 }; }
+}
+
+async function submitReview() {
+  const speciesData = currentSite.species.map(([name, count, ratio, conf, risk]) => ({
+    name, count, ratio, confidence: conf, risk
+  }));
+  const payload = {
+    site_id: currentSite.id,
+    site_name: currentSite.name,
+    risk: currentSite.risk,
+    count: currentSite.count,
+    concentration: currentSite.concentration,
+    confidence: currentSite.confidence,
+    species: speciesData,
+    image_src: currentView === "detect" ? "/pic/detect_microscope.jpg" : "/pic/raw_microscope.jpg",
+    note: "人工复核确认",
+  };
+  try {
+    const r = await fetch(`${API}/review/submit`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    const d = await r.json();
+    if (d.ok) {
+      lastReviewId = d.id;
+      showToast(`复核记录已保存到磁盘: ${d.id}`, "ok");
+      reviewDone = true;
+      updateLoopUI();
+      await fetchReviewStats();
+    } else {
+      showToast("复核提交失败", "err");
+    }
+  } catch(e) {
+    showToast(`后端连接失败: ${e.message}`, "err");
+  }
+}
+
+async function approveTraining() {
+  if (!lastReviewId) {
+    showToast("请先点击"人工复核"", "err");
+    return;
+  }
+  try {
+    const r = await fetch(`${API}/review/approve/${lastReviewId}`, { method: "POST" });
+    const d = await r.json();
+    if (d.ok) {
+      showToast(`已加入训练集: ${d.id}`, "ok");
+      addedToTraining = true;
+      reviewDone = true;
+      updateLoopUI();
+      await fetchReviewStats();
+    } else {
+      showToast("加入训练集失败", "err");
+    }
+  } catch(e) {
+    showToast(`后端连接失败: ${e.message}`, "err");
+  }
+}
+
+function showToast(msg, type) {
+  const t = $("#toast");
+  t.textContent = msg;
+  t.className = `feedback-toast show ${type}`;
+  setTimeout(() => t.classList.remove("show"), 3500);
+}
+
+// ═══════════════════════════════════════════
+//  Render functions
+// ═══════════════════════════════════════════
+function renderMetrics() {
+  const reviewedSamples = SITES.reduce((s, site) => s + site.sample, 0) + (reviewDone ? 50 : 0) + (addedToTraining ? 100 : 0);
+  $("#metrics").innerHTML = [
+    ["在线点位", `${SITES.length}/${SITES.length}`, "全部连接正常"],
+    ["今日告警", ALARMS.filter(a => a.risk !== "green").length, `含红色告警 ${ALARMS.filter(a => a.risk === "red").length} 条`],
+    ["最高风险", riskMap[currentSite.risk].label, riskMap[currentSite.risk].text + " · " + riskMap[currentSite.risk].suggest],
+    ["回流样本", reviewedSamples, "人工复核 → 训练数据闭环"],
+    ["模型版本", "v0.9 · YOLOv8n-P", "支持增量再训练"],
+  ].map(item => `
+    <article class="metric"><span>${item[0]}</span><strong>${item[1]}</strong><small>${item[2]}</small></article>
+  `).join("");
+}
+
+function renderSites() {
+  $("#siteList").innerHTML = SITES.map(site => {
+    const icon = site.trendDir === "up" ? "↑" : site.trendDir === "down" ? "↓" : "→";
+    const cls = site.trendDir === "up" ? "trend-up" : site.trendDir === "down" ? "trend-down" : "trend-flat";
+    return `<button class="site-card ${site.id === currentSite.id ? 'active' : ''}" data-site="${site.id}">
+      <div class="site-row"><span class="site-name">${site.name}</span><span class="risk-badge ${riskMap[site.risk].className}">${riskMap[site.risk].text}</span></div>
+      <div class="site-meta">${site.id} · ${site.scene}<br>${site.location}</div>
+      <div class="site-trend"><span class="${cls}">${icon}</span><span>浓度 ${site.concentration} cells/μL</span></div>
+    </button>`;
+  }).join("");
+  $$(".site-card").forEach(card => card.addEventListener("click", () => {
+    currentSite = SITES.find(s => s.id === card.dataset.site);
+    renderAll();
+  }));
+}
+
+function renderMain() {
+  const r = currentSite.risk;
+  $("#currentSiteTitle").textContent = currentSite.name + " · " + currentSite.scene;
+  $("#currentSiteMeta").textContent = `${currentSite.id} · ${currentSite.location}`;
+  $("#currentRisk").className = `risk-badge ${riskMap[r].className}`;
+  $("#currentRisk").textContent = `${riskMap[r].text} ${riskMap[r].label}`;
+  $("#scopeTime").textContent = `采集时间 ${new Date().toLocaleTimeString("zh-CN",{hour12:false})}`;
+
+  const imgMap = { raw:"/pic/raw_microscope.jpg", enhanced:"/pic/enhanced_microscope.jpg", detect:"/pic/detect_microscope.jpg", polar:"/pic/raw_microscope.jpg" };
+  const img = $("#microscopeImg");
+  if (img) img.src = imgMap[currentView] || imgMap.raw;
+
+  const scope = $("#microscope");
+  scope.classList.toggle("polar-view", currentView === "polar");
+
+  const labels = { raw:"RAW · 20x · 1mm视场", enhanced:"ENHANCED · 偏振去散射", detect:"YOLO RESULT · 识别框", polar:"POLAR · Stokes/AoP/DoLP" };
+  $("#scopeMode").textContent = labels[currentView] || labels.raw;
+
+  const polarGrid = $("#polarGrid");
+  if (polarGrid) polarGrid.classList.toggle("show", currentView === "polar");
+
+  $$(".tab").forEach(tab => tab.classList.toggle("active", tab.dataset.view === currentView));
+
+  $("#resultGrid").innerHTML = `
+    <article class="mini-card"><span>目标总数</span><strong>${currentSite.count.toLocaleString()}</strong></article>
+    <article class="mini-card"><span>浓度估算</span><strong>${currentSite.concentration}<small> cells/μL</small></strong></article>
+    <article class="mini-card"><span>平均置信度</span><strong>${currentSite.confidence}%</strong></article>
+    <article class="mini-card"><span>环境适宜度</span><strong>${Math.round((currentSite.env.temp/35*40 + currentSite.env.chlorophyll/50*30 + (currentSite.env.oxygen>6?30:15)))}%</strong></article>
+  `;
+
+  $("#speciesTable").innerHTML = currentSite.species.map(([name,count,ratio,conf,risk]) => `
+    <tr><td><strong>${name}</strong></td><td>${count.toLocaleString()}</td><td>${ratio}</td><td>${conf}%</td><td><span class="risk-badge ${riskMap[risk].className}">${riskMap[risk].text}</span></td></tr>
+  `).join("");
+
+  renderChart();
+}
+
+function renderChart() {
+  const vals = currentSite.trend, max = Math.max(...vals) * 1.15;
+  const w = 300, h = 190, pl = 18, pt = 20, pr = 18, pb = 20, cw = w-pl-pr, ch = h-pt-pb;
+  const line = (v, off, sc) => v.map((v,i) => `${pl + i*(cw/(v.length-1))},${pt+ch-(v*sc/max)*ch + off}`).join(" ");
+  const doVals = vals.map(v => Math.round(8.5 - (v/max)*3.5));
+  $("#chart").innerHTML = `<svg viewBox="0 0 ${w} ${h}"><polyline points="${line(vals,-8,.65)}" fill="none" stroke="#43b7ff" stroke-width="3"/><polyline points="${line(vals,0,1)}" fill="none" stroke="#39d7c8" stroke-width="3"/><polyline points="${line(vals,6,.82)}" fill="none" stroke="#fb923c" stroke-width="3" opacity=".85"/><polyline points="${line(doVals,0,.7)}" fill="none" stroke="#a78bfa" stroke-width="2.5" stroke-dasharray="6,3" opacity=".8"/>${vals.map((v,i) => {const x=pl+i*(cw/(vals.length-1)), y=pt+ch-(v/max)*ch; return `<circle cx="${x}" cy="${y}" r="3.8" fill="#39d7c8"/>`; }).join("")}</svg>`;
+}
+
+function renderOps() {
+  const items = [["camera","偏振相机"],["light","暗场光源"],["network","网络链路"],["power","供电状态"],["window","视窗清洁度"]];
+  $("#opsList").innerHTML = items.map(([k,label]) => `<div class="ops-item"><span>${label}</span><div class="bar"><i style="width:${currentSite.ops[k]}%"></i></div></div>`).join("");
+}
+
+function renderAlarms() {
+  const list = currentFilter === "all" ? ALARMS : ALARMS.filter(a => a.risk === currentFilter);
+  $("#alarmList").innerHTML = list.map(a => `
+    <div class="alarm-item"><div class="alarm-main"><strong>${a.title}</strong><span>${a.site} · ${a.time}<br>${a.detail}</span><div class="alarm-suggest">建议: ${a.suggest}</div></div><span class="risk-badge ${riskMap[a.risk].className}">${riskMap[a.risk].text}</span></div>
+  `).join("");
+  $$(".risk-filter").forEach(b => b.classList.toggle("active", b.dataset.risk === currentFilter));
+}
+
+function updateLoopUI() {
+  const revNode = $("#loopReview"), trainNode = $("#loopTrain");
+  if (reviewDone) {
+    revNode.classList.add("done");
+    revNode.querySelector(".dot").textContent = "✓";
+    $("#loopReviewStatus").textContent = "复核已完成 ✓";
+  }
+  if (addedToTraining) {
+    trainNode.classList.add("done");
+    trainNode.querySelector(".dot").textContent = "✓";
+    $("#loopTrainStatus").textContent = "已加入训练集 ✓";
+  }
+}
+
+function renderAll() {
+  renderMetrics();
+  renderSites();
+  renderMain();
+  renderOps();
+  renderAlarms();
+  updateLoopUI();
+}
+
+// ═══════════════════════════════════════════
+//  Event handlers
+// ═══════════════════════════════════════════
+$$(".tab").forEach(tab => tab.addEventListener("click", () => {
+  currentView = tab.dataset.view;
+  renderMain();
+}));
+
+$$(".risk-filter").forEach(btn => btn.addEventListener("click", () => {
+  currentFilter = btn.dataset.risk;
+  renderAlarms();
+}));
+
+$("#reviewBtn").addEventListener("click", submitReview);
+$("#trainBtn").addEventListener("click", approveTraining);
+
+function refreshData() {
+  SITES.forEach(site => {
+    const drift = Math.round((Math.random()-.36)*28);
+    site.count = Math.max(120, site.count + drift);
+    site.concentration = Math.max(80, site.concentration + Math.round(drift*.7));
+    site.trend = site.trend.slice(1).concat(Math.max(8, site.trend.at(-1) + Math.round((Math.random()-.35)*14)));
+    site.env.temp = +(site.env.temp + (Math.random()-.5)*.6).toFixed(1);
+    site.env.chlorophyll = +(site.env.chlorophyll + (Math.random()-.45)*1.2).toFixed(1);
+    site.env.turbidity = +(site.env.turbidity + (Math.random()-.5)*.8).toFixed(1);
+    site.env.oxygen = +(site.env.oxygen + (Math.random()-.5)*.3).toFixed(1);
+  });
+  renderAll();
+  checkBackend();
+  fetchReviewStats();
+  showToast("数据已刷新", "ok");
+}
+
+function openReport() {
+  const r = currentSite.risk;
+  $("#reportText").textContent = `${currentSite.name}（${currentSite.id}）当前为${riskMap[r].text}${riskMap[r].label}。识别目标 ${currentSite.count.toLocaleString()} 个，浓度 ${currentSite.concentration} cells/μL，优势藻 ${currentSite.species[0][0]}。环境: 水温 ${currentSite.env.temp}°C, 盐度 ${currentSite.env.salinity} psu, 浊度 ${currentSite.env.turbidity} NTU, 叶绿素 ${currentSite.env.chlorophyll} μg/L, DO ${currentSite.env.oxygen} mg/L。`;
+  $("#reportSuggestion").textContent = `处置建议: ${riskMap[r].suggest}。若6小时内浓度继续上升，启动现场处置预案并扩大周边点位巡测。`;
+  $("#reportModal").classList.add("show");
+}
+
+$("#closeModal").addEventListener("click", () => $("#reportModal").classList.remove("show"));
+$("#reportModal").addEventListener("click", e => { if (e.target.id === "reportModal") $("#reportModal").classList.remove("show"); });
+
+// ═══════════════════════════════════════════
+//  Startup
+// ═══════════════════════════════════════════
+checkBackend();
+fetchReviewStats().then(() => {
+  if (!reviewDone && !addedToTraining) {
+    // Try to detect previous reviews from stats
+    fetchReviewStats().then(s => {
+      if (s.total_reviewed > 0) reviewDone = true;
+      if (s.total_training > 0) addedToTraining = true;
+      updateLoopUI();
+    });
+  }
+});
+renderAll();
+</script>
+</body>
+</html>

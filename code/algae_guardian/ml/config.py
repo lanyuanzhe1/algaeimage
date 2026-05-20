@@ -48,3 +48,4 @@ RISK_THRESHOLDS = {
 TEMP_RANGE = (28, 34)       # °C - optimal algae growth range
 SALINITY_RANGE = (22, 28)   # psu
 PH_RANGE = (7.5, 9.0)
+DO_LOW = 4.0                # mg/L - hypoxia threshold

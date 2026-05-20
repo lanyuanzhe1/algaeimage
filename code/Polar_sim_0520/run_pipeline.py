@@ -67,10 +67,16 @@ def stage2_rdn(I0: np.ndarray, I45: np.ndarray, I90: np.ndarray,
         use_deep=use_deep
     )
 
-    # Interpret RDN output channels as pseudo-Stokes
-    S0_recon = recon_4ch[:, :, 0].astype(np.float32)
-    S1_recon = recon_4ch[:, :, 1].astype(np.float32) * 2 - 128
-    S2_recon = recon_4ch[:, :, 2].astype(np.float32) * 2 - 128
+    # Proper Stokes from RDN-enhanced 4-channel (joint-normalized, ratios preserved)
+    # RDN output = enhanced I0'/I45'/I90'/I135'
+    I0_r = recon_4ch[:, :, 0].astype(np.float32)
+    I45_r = recon_4ch[:, :, 1].astype(np.float32)
+    I90_r = recon_4ch[:, :, 2].astype(np.float32)
+    I135_r = recon_4ch[:, :, 3].astype(np.float32)
+
+    S0_recon = I0_r + I90_r
+    S1_recon = I0_r - I90_r
+    S2_recon = I45_r - I135_r
     DoLP = np.clip(np.sqrt(S1_recon**2 + S2_recon**2) / (S0_recon + 1e-10), 0, 1)
     AoP = 0.5 * np.arctan2(S2_recon, S1_recon)
 

@@ -1,0 +1,26 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Install Copilot Superpowers",
+			"type": "shell",
+			"command": "copilot plugin marketplace add obra/superpowers-marketplace && copilot plugin install superpowers@superpowers-marketplace",
+			"isBackground": false,
+			"group": "build"
+		},
+		{
+			"label": "Install Copilot Superpowers",
+			"type": "shell",
+			"command": "copilot plugin marketplace add obra/superpowers-marketplace ; copilot plugin install superpowers@superpowers-marketplace",
+			"isBackground": false,
+			"group": "build"
+		},
+		{
+			"label": "Install Copilot Superpowers Global",
+			"type": "shell",
+			"command": "copilot plugin marketplace add obra/superpowers-marketplace ; copilot plugin install superpowers@superpowers-marketplace",
+			"isBackground": false,
+			"group": "build"
+		}
+	]
+}

@@ -176,12 +176,12 @@ class PolarizationReconstructor:
 
         output = output.squeeze(0).permute(1, 2, 0).cpu().numpy()
 
-        # Normalize each channel to uint8
-        out = np.zeros_like(output, dtype=np.uint8)
-        for c in range(output.shape[2]):
-            ch = output[:, :, c]
-            ch = (ch - ch.min()) / (ch.max() - ch.min() + 1e-10) * 255
-            out[:, :, c] = ch.astype(np.uint8)
+        # Joint normalization: all 4 channels share one min/max range.
+        # This preserves inter-channel intensity ratios, which is critical
+        # for physically meaningful Stokes/DoLP computation downstream.
+        cmin, cmax = output.min(), output.max()
+        scale = 255.0 / (cmax - cmin + 1e-10)
+        out = np.clip((output - cmin) * scale, 0, 255).astype(np.uint8)
 
         return out
 

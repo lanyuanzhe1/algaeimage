@@ -54,7 +54,9 @@
       "Bash(\"A:/Anaconda_envs/envs/ican/Scripts/pip.exe\" install *)",
       "Bash(mkdir -p /e/code/codex/code/Polar_sim_0520/image_processing)",
       "Bash(mkdir -p /e/code/codex/code/Polar_sim_0520/ml/models)",
-      "Bash(tasklist)"
+      "Bash(tasklist)",
+      "WebFetch(domain:www.mdpi.com)",
+      "WebFetch(domain:www.thefreelibrary.com)"
     ]
   }
 }

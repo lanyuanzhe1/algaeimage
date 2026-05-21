@@ -20,10 +20,11 @@ def main():
     parser.add_argument("--device", default="0", help="GPU device ID")
     parser.add_argument("--name", default="lifewatch_v2_v8s_320", help="Experiment name")
     parser.add_argument("--project", default="/data/lifewatch_yolo/yolo_results", help="Project path for logs/weights")
-    parser.add_argument("--lr", type=float, default=0.001, help="Initial learning rate")
+    parser.add_argument("--lr", type=float, default=0.0002, help="Initial learning rate (reduced from 0.001 to prevent FP16 nan)")
     parser.add_argument("--patience", type=int, default=20, help="Early stopping patience")
     parser.add_argument("--workers", type=int, default=8, help="Number of data loader workers")
     parser.add_argument("--cache", default="disk", help="Cache dataset ('disk', 'ram', or False)")
+    parser.add_argument("--resume_best", action="store_true", help="Resume from best.pt check point with safety defenses")
     args = parser.parse_args()
 
     print("=" * 60)
@@ -38,9 +39,17 @@ def main():
     print(f"  Saving to:    {args.project}/{args.name}/")
     print("=" * 60)
 
-    # Automatically download/fetch pretrained base model
-    print(f"Loading base weights: {args.model}...")
-    model = YOLO(args.model)
+    # 如果指定了 --resume_best，并且存在 best.pt 的健康权重，我们将从其上微调，并防御性关闭 amp 
+    best_weights_path = f"{args.project}/{args.name}/weights/best.pt"
+    if args.resume_best and os.path.exists(best_weights_path):
+        print(f"🛡️ Defensively resuming training from healthy checkpoint: {best_weights_path}")
+        print("🛡️ AMP is disabled (`amp=False`) to avoid gradients range overflow.")
+        model = YOLO(best_weights_path)
+        use_amp = False
+    else:
+        print(f"Loading base weights: {args.model}...")
+        model = YOLO(args.model)
+        use_amp = True
 
     # Start training
     results = model.train(
@@ -53,6 +62,7 @@ def main():
         workers=args.workers,
         optimizer="AdamW",
         lr0=args.lr,
+        amp=use_amp,                 # 基于安全防御考量，若使用 resume_best 则强制使用 FP32
         augment=True,
         mosaic=1.0,
         mixup=0.1,

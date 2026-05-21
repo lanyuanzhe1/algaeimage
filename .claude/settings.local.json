@@ -53,7 +53,8 @@
       "Bash(A:/Anaconda_envs/envs/ican/pip.exe install *)",
       "Bash(\"A:/Anaconda_envs/envs/ican/Scripts/pip.exe\" install *)",
       "Bash(mkdir -p /e/code/codex/code/Polar_sim_0520/image_processing)",
-      "Bash(mkdir -p /e/code/codex/code/Polar_sim_0520/ml/models)"
+      "Bash(mkdir -p /e/code/codex/code/Polar_sim_0520/ml/models)",
+      "Bash(tasklist)"
     ]
   }
 }

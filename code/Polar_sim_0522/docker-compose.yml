@@ -1,0 +1,32 @@
+version: '3.8'
+
+services:
+  algae_trainer:
+    build:
+      context: ../../
+      dockerfile: code/Polar_sim_0522/Dockerfile
+    image: algae-hsv-trainer:v1
+    container_name: algae_hsv_trainer_container
+    # 启用全部 NVIDIA GPU 透传加速（用于 RDN 训练加 YOLO 训练）
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    # 支持共享宿主机 IPC 内存，防 PyTorch DataLoader 报错 (shm_size)
+    shm_size: '8gb'
+    tty: true
+    stdin_open: true
+    environment:
+      - CUDA_VISIBLE_DEVICES=0
+      - PYTHONPATH=/app/code
+    # 外挂真实本地与云端目录，免去将几十G的数据打进镜像：
+    volumes:
+      # 挂载您的本地数据集源 (宿主机绝对路径映射到容器内 /app/data)
+      - E:/code/codex/datasets:/app/data
+      # 挂载训练结果保存路径 (宿主机绝对路径映射到容器内 /app/results)
+      - E:/code/codex/results:/app/results
+    # 默认启动命令：进入交互，以便手动执行分步训练
+    command: /bin/bash

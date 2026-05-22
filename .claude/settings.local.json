@@ -56,7 +56,11 @@
       "Bash(mkdir -p /e/code/codex/code/Polar_sim_0520/ml/models)",
       "Bash(tasklist)",
       "WebFetch(domain:www.mdpi.com)",
-      "WebFetch(domain:www.thefreelibrary.com)"
+      "WebFetch(domain:www.thefreelibrary.com)",
+      "Bash(A:/Anaconda_envs/envs/ican/python -c ' *)",
+      "Bash(cat)",
+      "Bash(A:/Anaconda_envs/envs/ican/python /tmp/check_lw.py)",
+      "Bash(A:/Anaconda_envs/envs/ican/python)"
     ]
   }
 }

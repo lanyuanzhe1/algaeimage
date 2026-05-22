@@ -60,7 +60,16 @@
       "Bash(A:/Anaconda_envs/envs/ican/python -c ' *)",
       "Bash(cat)",
       "Bash(A:/Anaconda_envs/envs/ican/python /tmp/check_lw.py)",
-      "Bash(A:/Anaconda_envs/envs/ican/python)"
+      "Bash(A:/Anaconda_envs/envs/ican/python)",
+      "Bash(A:/Anaconda_envs/envs/ican/python -c \"import paramiko; c=paramiko.SSHClient\\(\\); c.set_missing_host_key_policy\\(paramiko.AutoAddPolicy\\(\\)\\); c.connect\\('tssjfkari2ofchucsnow.deepln.com',port=44448,username='root',password='31N41wYaWf5hsGtZNSYcyRHsTlkP32Dx',timeout=10,banner_timeout=10,auth_timeout=10\\); s,_,_=c.exec_command\\('tail -15 /data/lifewatch_hsv/rdn_training/log.txt 2>/dev/null; echo ---GPU---; nvidia-smi --query-gpu=memory.used,utilization.gpu --format=csv,noheader',timeout=15\\); print\\(s.read\\(\\).decode\\(\\)\\); c.close\\(\\)\")",
+      "Bash(A:/Anaconda_envs/envs/ican/python /tmp/chk.py)",
+      "Bash(A:/Anaconda_envs/envs/ican/python /tmp/chk2.py)",
+      "Bash(A:/Anaconda_envs/envs/ican/python /tmp/chk3.py)",
+      "Bash(A:/Anaconda_envs/envs/ican/python /tmp/chk4.py)",
+      "Bash(A:/Anaconda_envs/envs/ican/python /tmp/upload_old_rdn.py)",
+      "Bash(A:/Anaconda_envs/envs/ican/python /tmp/chk5.py)",
+      "Bash(A:/Anaconda_envs/envs/ican/python /tmp/chk6.py)",
+      "Bash(A:/Anaconda_envs/envs/ican/python /tmp/run_cmp.py)"
     ]
   }
 }

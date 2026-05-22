@@ -1,12 +1,11 @@
-"""Full LifeWatch HSV pipeline: RGB -> HSV 4ch -> RDN -> I_enh v2 -> YOLO dataset.
+"""Full LifeWatch HSV pipeline with batched RDN inference for GPU throughput.
 
-Usage (on server):
-    /data/miniconda/envs/torch/bin/python deploy/run_pipeline.py \
-        --image-dir /data/lifewatch_hsv/images \
-        --split-dir /data/lifewatch_hsv/splits \
-        --rdn-model /data/lifewatch_hsv/rdn_training/rdn_hsv_lifewatch.pth \
-        --output /data/lifewatch_hsv/processed \
-        --splits train,val,test
+Usage: PYTHONUNBUFFERED=1 python deploy/run_pipeline.py \
+    --image-dir /data/lifewatch_hsv/images \
+    --split-dir /data/lifewatch_hsv/splits \
+    --rdn-model /data/lifewatch_hsv/rdn_training/rdn_hsv_lifewatch.pth \
+    --output /data/lifewatch_hsv/processed --splits train,val,test \
+    --batch-size 128
 """
 
 import argparse, os, sys, time
@@ -17,10 +16,11 @@ sys.path.insert(0, "/data/lifewatch_hsv/code")
 
 import numpy as np
 import cv2
+import torch
 from hsv_polarization import hsv_to_polarization
 from image_processing.polarization import PolarizationProcessor
 from image_processing.enhancement import ImageEnhancer
-from ml.reconstructor import PolarizationReconstructor
+from ml.reconstructor import RDN
 
 ALPHA, BETA, GAMMA = 0.6, 0.25, 0.35
 POL_STRENGTH, NOISE_LEVEL = 1.0, 0.02
@@ -31,16 +31,6 @@ def _norm_u8(x):
     x = x.astype(np.float32)
     d = x.max() - x.min()
     return np.zeros_like(x, dtype=np.uint8) if d < 1e-10 else ((x - x.min()) / d * 255).astype(np.uint8)
-
-
-def letterbox(img, target):
-    h, w = img.shape[:2]
-    s = target / max(h, w)
-    nh, nw = int(h * s), int(w * s)
-    resized = cv2.resize(img, (nw, nh), interpolation=cv2.INTER_LINEAR)
-    padded = np.zeros((target, target, img.shape[2]) if img.ndim == 3 else (target, target), dtype=img.dtype)
-    padded[:nh, :nw] = resized
-    return padded
 
 
 def load_split(path):
@@ -56,6 +46,82 @@ def load_split(path):
     return mapping
 
 
+PATCH_SIZE = 128  # fixed input size for batched RDN inference
+
+def pad_to_square(img_hw, target):
+    """Fit (C,H,W) array into target×target: resize if needed, then zero-pad.
+    Returns (padded_array, new_h, new_w)."""
+    c, h, w = img_hw.shape
+    if max(h, w) > target:
+        scale = target / max(h, w)
+        h, w = int(h * scale), int(w * scale)
+        img_hw = np.array([cv2.resize(ch, (w, h), interpolation=cv2.INTER_LINEAR) for ch in img_hw])
+    out = np.zeros((c, target, target), dtype=img_hw.dtype)
+    out[:, :h, :w] = img_hw
+    return out, h, w
+
+def prepare_batch(batch_stems, stem_to_path, device):
+    """HSV sim on CPU -> batched tensors for RDN at fixed PATCH_SIZE.
+    Returns (batch_tensor, orig_sizes_list)."""
+    inputs = []
+    orig_sizes = []
+    for stem in batch_stems:
+        img = cv2.imread(str(stem_to_path[stem]))
+        if img is None:
+            raise ValueError(f"Failed to read: {stem}")
+        rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+        sim = hsv_to_polarization(rgb, polarization_strength=POL_STRENGTH,
+                                  add_noise=True, noise_level=NOISE_LEVEL)
+        ch = np.stack([sim[k].astype(np.float32)/255.0 for k in ['I0','I45','I90','I135']], axis=0)
+        ch, nh, nw = pad_to_square(ch, PATCH_SIZE)
+        orig_sizes.append((nh, nw))
+        inputs.append(ch)
+
+    batch = torch.from_numpy(np.stack(inputs, axis=0)).to(device)
+    return batch, orig_sizes
+
+
+def process_batch_outputs(batch_tensor, orig_sizes, pp, enhancer):
+    """RDN output -> crop to orig size -> I_enh v2 -> letterbox -> CLAHE on CPU."""
+    outs = []
+    batch_np = batch_tensor.cpu().numpy()
+    for i in range(batch_np.shape[0]):
+        oh, ow = orig_sizes[i]
+        rdn_out = batch_np[i, :, :oh, :ow]  # crop padded region
+
+        I0 = rdn_out[0]
+        I45 = rdn_out[1]
+        I90 = rdn_out[2]
+        I135 = rdn_out[3]
+
+        S0 = I0 + I90
+        S1 = I0 - I90
+        S2 = I45 - I135
+        DoLP = np.clip(np.sqrt(S1**2+S2**2)/(S0+1e-10), 0, 1)
+        AoP = 0.5 * np.arctan2(S2, S1)
+
+        S0_ch = _norm_u8(S0)
+        enh_ch = pp.polarization_enhancement_v2(S0, DoLP, AoP, alpha=ALPHA, beta=BETA, gamma=GAMMA)
+        corrected_raw = S0 * (1.0 - 0.5 * DoLP.astype(np.float32))
+        cor_ch = _norm_u8(corrected_raw)
+
+        # Letterbox to OUTPUT_SIZE
+        h, w = S0_ch.shape[:2]
+        s = OUTPUT_SIZE / max(h, w)
+        nh, nw = int(h*s), int(w*s)
+        S0_lb = np.zeros((OUTPUT_SIZE, OUTPUT_SIZE), dtype=np.uint8)
+        enh_lb = np.zeros((OUTPUT_SIZE, OUTPUT_SIZE), dtype=np.uint8)
+        cor_lb = np.zeros((OUTPUT_SIZE, OUTPUT_SIZE), dtype=np.uint8)
+        S0_lb[:nh,:nw] = cv2.resize(S0_ch, (nw,nh), interpolation=cv2.INTER_LINEAR)
+        enh_lb[:nh,:nw] = cv2.resize(enh_ch, (nw,nh), interpolation=cv2.INTER_LINEAR)
+        cor_lb[:nh,:nw] = cv2.resize(cor_ch, (nw,nh), interpolation=cv2.INTER_LINEAR)
+
+        stacked = np.stack([S0_lb, enh_lb, cor_lb], axis=-1)
+        final = enhancer.enhance(stacked, color_correct=True, clahe=True, dehaze=False)
+        outs.append(final)
+    return outs
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--image-dir", required=True)
@@ -63,23 +129,29 @@ def main():
     parser.add_argument("--rdn-model", required=True)
     parser.add_argument("--output", required=True)
     parser.add_argument("--splits", default="train,val,test")
+    parser.add_argument("--batch-size", type=int, default=128)
     args = parser.parse_args()
 
     IMAGE_DIR = Path(args.image_dir)
-    SPLIT_DIR = Path(args.split_dir)
     OUTPUT = Path(args.output)
     SPLITS = [s.strip() for s in args.splits.split(",")]
+    B = args.batch_size
+    DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    print(f"Device: {DEVICE}, Batch size: {B}")
 
-    print(f"Loading RDN: {args.rdn_model}")
-    recon = PolarizationReconstructor(model_path=args.rdn_model)
-    use_rdn = recon.load_model()
-    print(f"  RDN loaded: {use_rdn}")
+    # Load RDN directly (raw float output, no joint-norm)
+    model = RDN(num_channels=4, num_features=16, growth_rate=16,
+                num_blocks=12, num_layers=6).to(DEVICE)
+    sd = torch.load(args.rdn_model, map_location=DEVICE, weights_only=True)
+    model.load_state_dict({k:v for k,v in sd.items() if k in model.state_dict().keys()}, strict=False)
+    model.eval()
+    print(f"RDN loaded: {args.rdn_model}")
 
     pp = PolarizationProcessor()
     enhancer = ImageEnhancer()
 
     for split_name in SPLITS:
-        sf = SPLIT_DIR / f"{split_name}.txt"
+        sf = Path(args.split_dir) / f"{split_name}.txt"
         if not sf.exists():
             print(f"  SKIP {split_name}: not found")
             continue
@@ -91,74 +163,65 @@ def main():
         out_img.mkdir(parents=True, exist_ok=True)
         out_lbl.mkdir(parents=True, exist_ok=True)
 
-        done, miss = 0, 0
-        t0 = time.time()
+        # Pre-build stem->path index
+        print("  Building file index...")
+        stem_to_path = {}
+        for img_path in IMAGE_DIR.rglob("*.jpg"):
+            stem_to_path[img_path.stem] = img_path
+        print(f"  Indexed {len(stem_to_path)} images")
 
-        for stem, cls_id in stem_to_cls.items():
-            matches = list(IMAGE_DIR.rglob(f"{stem}.jpg"))
-            if not matches:
-                miss += 1
-                if miss <= 3: print(f"  NOT FOUND: {stem}")
+        stems = list(stem_to_cls.keys())
+        done, miss, t0 = 0, 0, time.time()
+
+        # Process in batches
+        for start in range(0, len(stems), B):
+            batch_stems = [s for s in stems[start:start+B] if s in stem_to_path]
+            if not batch_stems:
                 continue
 
+            # 1. HSV simulation (CPU) -> padded batched tensors
             try:
-                rgb = cv2.cvtColor(cv2.imread(str(matches[0])), cv2.COLOR_BGR2RGB)
-                if rgb is None:
-                    miss += 1; continue
+                batch_in, orig_sizes = prepare_batch(batch_stems, stem_to_path, DEVICE)
+            except Exception as e:
+                print(f"  ERROR prepare_batch: {e}")
+                miss += len(batch_stems)
+                continue
 
-                sim = hsv_to_polarization(rgb, polarization_strength=POL_STRENGTH,
-                                          add_noise=True, noise_level=NOISE_LEVEL)
-                I0 = sim["I0"].astype(np.float32)
-                I45 = sim["I45"].astype(np.float32)
-                I90 = sim["I90"].astype(np.float32)
-                I135 = sim["I135"].astype(np.float32)
+            # 2. RDN inference (GPU batched)
+            with torch.no_grad():
+                batch_out = model(batch_in)
 
-                if use_rdn:
-                    rdn_out = recon.reconstruct(I0, I45, I90, I135, use_deep=True)
-                    I0_r = rdn_out[:, :, 0].astype(np.float32)
-                    I45_r = rdn_out[:, :, 1].astype(np.float32)
-                    I90_r = rdn_out[:, :, 2].astype(np.float32)
-                    I135_r = rdn_out[:, :, 3].astype(np.float32)
-                else:
-                    I0_r, I45_r, I90_r, I135_r = I0, I45, I90, I135
+            # 3. Crop back + I_enh + CLAHE (CPU)
+            try:
+                finals = process_batch_outputs(batch_out, orig_sizes, pp, enhancer)
+            except Exception as e:
+                print(f"  ERROR in post-process: {e}")
+                for s in batch_stems:
+                    miss += 1
+                continue
 
-                S0 = I0_r + I90_r
-                S1 = I0_r - I90_r
-                S2 = I45_r - I135_r
-                DoLP = np.clip(np.sqrt(S1**2 + S2**2) / (S0 + 1e-10), 0, 1)
-                AoP = 0.5 * np.arctan2(S2, S1)
-
-                S0_ch = letterbox(_norm_u8(S0), OUTPUT_SIZE)
-                enh_ch = letterbox(pp.polarization_enhancement_v2(S0, DoLP, AoP, alpha=ALPHA, beta=BETA, gamma=GAMMA), OUTPUT_SIZE)
-                corrected_raw = S0 * (1.0 - 0.5 * DoLP.astype(np.float32))
-                cor_ch = letterbox(_norm_u8(corrected_raw), OUTPUT_SIZE)
-
-                stacked = np.stack([S0_ch, enh_ch, cor_ch], axis=-1)
-                final = enhancer.enhance(stacked, color_correct=True, clahe=True, dehaze=False)
+            # 4. Save
+            for stem, final in zip(batch_stems, finals):
+                cls_id = stem_to_cls[stem]
                 cv2.imwrite(str(out_img / f"{stem}.jpg"),
-                            cv2.cvtColor(final, cv2.COLOR_RGB2BGR), [cv2.IMWRITE_JPEG_QUALITY, 92])
-
+                            cv2.cvtColor(final, cv2.COLOR_RGB2BGR),
+                            [cv2.IMWRITE_JPEG_QUALITY, 92])
                 with open(out_lbl / f"{stem}.txt", "w") as f:
                     f.write(f"{cls_id} 0.5 0.5 1.0 1.0\n")
-
                 done += 1
 
-                if done % 5000 == 0:
-                    e = time.time() - t0
-                    rate = done / max(e, 1)
-                    eta = (len(stem_to_cls) - done) / max(rate, 0.01)
-                    print(f"  [{split_name}] {done}/{len(stem_to_cls)} "
-                          f"({100*done/len(stem_to_cls):.1f}%) {rate:.0f}/s ETA {eta/60:.0f}m")
-
-            except Exception as ex:
-                miss += 1
-                if miss <= 3: print(f"  ERROR {stem}: {ex}")
+            if done % (B * 5) == 0 or done == len(batch_stems):
+                e = time.time() - t0
+                rate = done / max(e, 1)
+                eta = (len(stems) - done) / max(rate, 0.01)
+                print(f"  [{split_name}] {done}/{len(stems)} "
+                      f"({100*done/len(stems):.1f}%) {rate:.0f}/s ETA {eta/60:.0f}m")
 
         e = time.time() - t0
         print(f"  [{split_name}] DONE: {done} ok, {miss} miss, {e:.0f}s ({e/60:.1f}m)")
 
     # dataset.yaml
-    cf = SPLIT_DIR / "classes.txt"
+    cf = Path(args.split_dir) / "classes.txt"
     class_names = []
     if cf.exists():
         with open(cf) as f:

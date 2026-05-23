@@ -139,7 +139,22 @@
       "Bash(\"A:\\\\Anaconda_envs\\\\envs\\\\ican\\\\python.exe\" *)",
       "Bash(A:/Anaconda_envs/envs/ican/python.exe *)",
       "Bash(\"A:/Anaconda_envs/envs/ican/python.exe\" -c \"import paramiko*)",
-      "WebFetch(domain:zenodo-rdm.web.cern.ch)"
+      "WebFetch(domain:zenodo-rdm.web.cern.ch)",
+      "Bash(A:/Anaconda_envs/envs/ican/python /tmp/restart_fast.py)",
+      "Bash(A:/Anaconda_envs/envs/ican/python /tmp/chk_v2.py)",
+      "Bash(A:/Anaconda_envs/envs/ican/python /tmp/chk_v3.py)",
+      "Bash(A:/Anaconda_envs/envs/ican/python /tmp/chk_v5.py)",
+      "Bash(A:/Anaconda_envs/envs/ican/python /tmp/check_5060.py)",
+      "Bash(A:/Anaconda_envs/envs/ican/python /tmp/check2.py)",
+      "Bash(A:/Anaconda_envs/envs/ican/python /tmp/clean_5060.py)",
+      "Bash(A:/Anaconda_envs/envs/ican/python /tmp/clean_bg.py)",
+      "Bash(A:/Anaconda_envs/envs/ican/python /tmp/archive.py)",
+      "Bash(A:/Anaconda_envs/envs/ican/python /tmp/dl_zip.py)",
+      "Bash(A:/Anaconda_envs/envs/ican/python /tmp/zip2.py)",
+      "Bash(A:/Anaconda_envs/envs/ican/python /tmp/migrate.py)",
+      "Bash(A:/Anaconda_envs/envs/ican/python /tmp/direct_scp.py)",
+      "Bash(A:/Anaconda_envs/envs/ican/python /tmp/chk_ti.py)",
+      "Bash(A:/Anaconda_envs/envs/ican/python /tmp/both.py)"
     ],
     "deny": []
   },

@@ -69,7 +69,20 @@
       "Bash(A:/Anaconda_envs/envs/ican/python /tmp/upload_old_rdn.py)",
       "Bash(A:/Anaconda_envs/envs/ican/python /tmp/chk5.py)",
       "Bash(A:/Anaconda_envs/envs/ican/python /tmp/chk6.py)",
-      "Bash(A:/Anaconda_envs/envs/ican/python /tmp/run_cmp.py)"
+      "Bash(A:/Anaconda_envs/envs/ican/python /tmp/run_cmp.py)",
+      "Bash(A:/Anaconda_envs/envs/ican/python /tmp/spd3.py)",
+      "Bash(A:/Anaconda_envs/envs/ican/python /tmp/old.py)",
+      "Bash(A:/Anaconda_envs/envs/ican/python /tmp/launch_v2.py)",
+      "Bash(A:/Anaconda_envs/envs/ican/python /tmp/subset.py)",
+      "Bash(A:/Anaconda_envs/envs/ican/python /tmp/fix_half.py)",
+      "Bash(A:/Anaconda_envs/envs/ican/python /tmp/fix2.py)",
+      "Bash(A:/Anaconda_envs/envs/ican/python /tmp/bg_half.py)",
+      "Bash(cat > *)",
+      "Bash(A:/Anaconda_envs/envs/ican/python /tmp/swap.py)",
+      "Bash(git log *)"
+    ],
+    "additionalDirectories": [
+      "\\tmp"
     ]
   }
 }

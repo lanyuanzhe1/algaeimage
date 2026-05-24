@@ -9,7 +9,8 @@
     "CLAUDE_CODE_SUBAGENT_MODEL": "deepseek-v4-pro[1m]",
     "API_TIMEOUT_MS": "600000",
     "CONDA_DEFAULT_ENV": "ican",
-    "CONDA_PREFIX": "A:\\Anaconda_envs\\envs\\ican"
+    "CONDA_PREFIX": "A:\\Anaconda_envs\\envs\\ican",
+    "CLAUDE_CODE_NEW_INIT": "1"
   },
   "permissions": {
     "allow": [

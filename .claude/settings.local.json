@@ -79,7 +79,12 @@
       "Bash(A:/Anaconda_envs/envs/ican/python /tmp/bg_half.py)",
       "Bash(cat > *)",
       "Bash(A:/Anaconda_envs/envs/ican/python /tmp/swap.py)",
-      "Bash(git log *)"
+      "Bash(git log *)",
+      "Bash(ls AGENTS.md)",
+      "Bash(ls CONTEXT.md)",
+      "Bash(ls CONTEXT-MAP.md)",
+      "Bash(ls -d docs/adr/)",
+      "Bash(ls -d docs/agents/)"
     ],
     "additionalDirectories": [
       "\\tmp"

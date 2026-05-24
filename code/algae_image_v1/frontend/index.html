@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>藻影卫士 V1.0</title>
+  <link rel="stylesheet" href="css/style.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+<body>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════
+       Header
+       ═══════════════════════════════════════════════════════════════════════ -->
+  <header class="header">
+    <h1>藻影卫士 Algae Guardian</h1>
+    <span class="version-badge">V1.0</span>
+  </header>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════
+       Tabs
+       ═══════════════════════════════════════════════════════════════════════ -->
+  <nav class="tabs" id="tabNav">
+    <button class="tab-btn active" data-tab="detect">检测</button>
+    <button class="tab-btn" data-tab="history">历史记录</button>
+    <button class="tab-btn" data-tab="dashboard">仪表板</button>
+    <button class="tab-btn" data-tab="devices" disabled>设备管理</button>
+    <button class="tab-btn" data-tab="review" disabled>人工复核</button>
+  </nav>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════
+       Tab 1: Detection
+       ═══════════════════════════════════════════════════════════════════════ -->
+  <section class="tab-content active" id="tab-detect">
+    <div class="detect-layout">
+
+      <!-- Left Panel: Upload -->
+      <div class="detect-left">
+        <div class="upload-zone" id="uploadZone">
+          <span class="upload-icon">&#128269;</span>
+          <p class="upload-text">拖拽图片到此处 或 点击选择文件</p>
+          <p class="upload-hint">支持 JPG / PNG / TIFF / BMP 格式，最大 50 张</p>
+          <input type="file" id="fileInput" accept="image/jpeg,image/png,image/tiff,.tif,.bmp,image/bmp" multiple hidden>
+          <input type="file" id="folderInput" webkitdirectory hidden>
+          <img id="previewImage" class="preview-thumb hidden" alt="预览">
+        </div>
+        <div class="btn-group">
+          <button class="btn btn-outline" id="btnSelectFolder">选择文件夹</button>
+          <button class="btn btn-primary" id="btnSingleDetect" disabled>单图检测</button>
+          <button class="btn" id="btnBatchDetect" disabled>批量处理</button>
+        </div>
+        <p class="text-sm text-muted" id="fileCountLabel"></p>
+
+        <!-- Batch Progress Bar -->
+        <div class="progress-bar-wrap" id="progressWrap">
+          <div class="progress-bar">
+            <div class="progress-fill" id="progressFill"></div>
+          </div>
+          <p class="progress-text" id="progressText"></p>
+        </div>
+      </div>
+
+      <!-- Right Panel: Result -->
+      <div class="detect-right">
+        <div class="result-panel" id="resultPanel">
+          <div class="panel-header">
+            <span>检测结果</span>
+            <span class="text-sm text-muted" id="resultTime" style="display:none;"></span>
+          </div>
+          <div class="panel-body">
+            <div class="empty-state" id="resultEmpty">
+              <span class="empty-icon">&#128206;</span>
+              <p class="empty-text">暂无检测结果</p>
+              <p class="empty-hint">请在左侧上传图片后点击检测</p>
+            </div>
+            <div id="resultContent" class="hidden">
+              <img id="resultImage" class="result-image" alt="检测结果">
+              <div class="result-meta" id="resultMeta"></div>
+              <ul class="detect-list" id="detectList"></ul>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════
+       Tab 2: History
+       ═══════════════════════════════════════════════════════════════════════ -->
+  <section class="tab-content" id="tab-history">
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>时间</th>
+            <th>文件名</th>
+            <th>风险等级</th>
+            <th>检测数量</th>
+            <th>质量评分</th>
+            <th>操作</th>
+          </tr>
+        </thead>
+        <tbody id="historyTableBody">
+          <tr>
+            <td colspan="6">
+              <div class="empty-state">
+                <span class="empty-icon">&#128196;</span>
+                <p class="empty-text">暂无检测记录</p>
+                <p class="empty-hint">完成检测后记录将显示在此处</p>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="pagination" id="historyPagination"></div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════
+       Tab 3: Dashboard
+       ═══════════════════════════════════════════════════════════════════════ -->
+  <section class="tab-content" id="tab-dashboard">
+    <!-- Stats -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-value" id="statTotal">--</div>
+        <div class="stat-label">总检测次数</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value" id="statToday">--</div>
+        <div class="stat-label">今日检测</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value high-risk" id="statHighRisk">--</div>
+        <div class="stat-label">高危预警</div>
+      </div>
+    </div>
+
+    <!-- Charts -->
+    <div class="charts-grid">
+      <div class="chart-card">
+        <div class="chart-title">藻类分布</div>
+        <canvas id="chartClassDist"></canvas>
+      </div>
+      <div class="chart-card">
+        <div class="chart-title">风险分布</div>
+        <canvas id="chartRiskDist"></canvas>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════
+       Tab 4: Devices (placeholder)
+       ═══════════════════════════════════════════════════════════════════════ -->
+  <section class="tab-content" id="tab-devices">
+    <div class="placeholder-tab">
+      <span class="placeholder-icon">&#9881;</span>
+      <h3>设备管理</h3>
+      <p>设备管理模块将在后续版本开放</p>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════
+       Tab 5: Review (placeholder)
+       ═══════════════════════════════════════════════════════════════════════ -->
+  <section class="tab-content" id="tab-review">
+    <div class="placeholder-tab">
+      <span class="placeholder-icon">&#128221;</span>
+      <h3>人工复核</h3>
+      <p>人工复核模块将在后续版本开放</p>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════
+       Scripts
+       ═══════════════════════════════════════════════════════════════════════ -->
+  <script src="js/app.js"></script>
+  <script src="js/detection.js"></script>
+  <script src="js/dashboard.js"></script>
+</body>
+</html>

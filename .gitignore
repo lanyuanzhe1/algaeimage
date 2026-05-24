@@ -13,7 +13,9 @@ code/Polar_sim_0522/output/
 code/Polar_sim_0522/output/preview_2026-05-22/
 # Redundant Backups
 code/algae_guardian/data/rdn_output_v2_灰度备份/
-
+#v1网页前端对应的后端输入输出文件夹
+code/algae_image_v1/backend/data/results/
+code/algae_image_v1/backend/data/uploads/
 # Temp files
 session-log.txt
 *.log

@@ -39,6 +39,13 @@ function switchPage(pageName) {
   currentPage = pageName;
   currentTab = pageName;  // sync backward-compat var for detection.js
 
+  // Manage auto-refresh: only active on home page
+  if (pageName === 'home') {
+    if (typeof startHomeAutoRefresh === 'function') startHomeAutoRefresh();
+  } else {
+    if (typeof stopHomeAutoRefresh === 'function') stopHomeAutoRefresh();
+  }
+
   // Update nav button states
   document.querySelectorAll('#navBar .nav-btn').forEach(function (btn) {
     btn.classList.toggle('active', btn.getAttribute('data-page') === pageName);
@@ -56,7 +63,7 @@ function switchPage(pageName) {
   }
 
   // Page-specific loading
-  if (pageName === 'dashboard' || pageName === 'home') {
+  if (pageName === 'dashboard') {
     loadDashboard();
   }
   if (pageName === 'history') {

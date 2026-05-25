@@ -5,7 +5,6 @@
 :root {
   /* Primary — blue-cyan */
   --primary: #1976d2;
-  --primary-dark: #1565c0;
   --primary-light: #43b7ff;
   --cyan: #0891b2;
   --cyan-light: #39d7c8;
@@ -44,6 +43,11 @@
 
   /* Typography */
   --font-mono: 'SF Mono','Cascadia Code','Consolas',monospace;
+
+  /* Backward-compat aliases for dashboard.js inline styles */
+  --text-primary: var(--text);
+  --text-secondary: var(--muted);
+  --text-muted: var(--muted);
 }
 
 /* ── Reset & Base ── */

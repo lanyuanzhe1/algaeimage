@@ -18,7 +18,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 `docs/` 目录包含 13 份参考文档 (训练总结、交接文档、数据集调查等)。
 
-**当前分支**: `HSV`。`code/algae_image_v1/` 全部文件尚未 git 提交。
+`@code/README.md` — 完整目录地图（含状态标记）和模型权重清单
+`@docs/handoff-20260524-algae-guardian-v1.md` — V1 构建交接文档
+`@docs/v1_product_build_0524.md` — V1 产品构建日志
+
+**当前分支**: `HSV`。
 
 ---
 
@@ -79,7 +83,7 @@ core_engine/ (纯Python库, 零框架依赖: numpy/PyTorch/cv2)
 
 ### 前端
 
-`frontend/index.html` — 5 Tab SPA (检测/历史记录/仪表板 已启用; 设备管理/人工复核 占位)。
+`frontend/index.html` — 6 页面 SPA (首页/检测/历史记录/仪表板/设备管理/人工复核)。
 文件夹选择: `webkitdirectory` input + 拖放递归遍历。Chart.js 4.4.0 CDN。
 
 ### 依赖
@@ -88,8 +92,8 @@ core_engine/ (纯Python库, 零框架依赖: numpy/PyTorch/cv2)
 
 ### 模型权重
 
-- `weights/rdn_polarization.pth` — RDN, PSNR 62.46dB @ epoch 97 (~2.5MB)
-- `weights/best.pt` — YOLOv8s LifeWatch 95类, mAP50 84.7% (~22MB)
+- `code/algae_image_v1/weights/rdn_polarization.pth` — RDN, PSNR 62.46dB @ epoch 97 (~2.5MB)
+- `code/algae_image_v1/weights/best.pt` — YOLOv8s LifeWatch 95类, mAP50 84.7% (~22MB)
 
 ### 测试
 
@@ -125,28 +129,10 @@ RGB原图 → 偏振模拟(I0/I45/I90/I135) → RDN偏振重建 → I_enh增强 
 ### 模块结构
 
 - `image_processing/` — 偏振处理、增强、质量评估、评估图表
-  - `polarization_sim.py` — Malus定律 + 结构张量模拟
-  - `enhancement.py` — 水下颜色校正、CLAHE、暗通道先验去雾
-  - `quality.py` — Q 质量评分
-  - `eval_charts.py` — PR曲线、F1曲线、训练历史
-- `ml/` — 机器学习
-  - `reconstructor.py` — RDN残差稠密网络 (4→16→16→4, blocks=12, layers=6)
-  - `inference.py` — YOLOv8检测封装
-  - `config.py` — 藻种定义(6类)、风险阈值、FOV参数
-  - `tracker.py` — 时间窗平均 + 增长速率
-  - `preprocessing.py` / `postprocessing.py` — 预处理/后处理
-- `backend/` — FastAPI后端
-  - `app/models/` — 3表: Device, DetectionRecord, AlertRecord
-  - `app/routes/` — detection, devices, dashboard, review (4个路由模块)
-  - `app/services/` — detection_service (完整管线编排), risk_assessment (多因子风险评分)
-  - SQLite + aiosqlite, WAL模式
-- `cloud_training/` — 云服务器训练脚本 (27个.py文件)
-  - 数据准备: generate_rdn_data, prepare_h5, prepare_lifewatch, create_split
-  - 数据传输: upload_project, deploy_v8l, download_results
-  - 训练: train_rdn_cloud, train_yolo_cloud, train_yolo_v8s, train_lifewatch_yolo
-  - 处理: batch_process_rdn, simulate_polarization, rdn_reconstruct
-  - 监控: monitor.py
-- `tests/` — test_pipeline.py, batch_v2_fmpd.py, yolo_v2_infer.py 等
+- `ml/` — 机器学习 (RDN重建、YOLO检测、6类藻种配置、时序追踪)
+- `backend/` — FastAPI + SQLite/aiosqlite WAL模式, 3表4路由模块
+- `cloud_training/` — 云服务器训练脚本 (数据准备、传输、训练、监控, 27个.py文件)
+- `tests/` — 管线测试、批量处理、推理脚本
 
 ### 模型权重
 
@@ -219,6 +205,16 @@ HSV 色彩空间偏振模拟，性能远低于结构张量。但保留了**完�
 ## 五、云训练监控
 
 `.claude/scheduled_tasks.json` 配置了每小时第 17 分钟执行的监控任务，SSH 连接到云 GPU 服务器检查两组 YOLO 训练状态 (v8l_hsv_95 全量 + v8l_hsv_stable 半数)，报告 epoch/mAP/NaN/GPU 状态。
+
+---
+
+## 项目基础设施
+
+- **无 CI/CD** — 无 GitHub Actions、Jenkins 等配置
+- **无 lint/formatter** — 无 ruff、black、flake8 配置，Python 代码无统一风格约束
+- **GitHub CLI 可用** — `gh` 已安装，可用于 PR/Issue 操作
+- **Git LFS** — 追踪 `*.tif *.zip *.pth *.pt *.npz *.mp4`
+- **`.claude/rules/`** — 按路径生效的条件规则：`frontend.md`、`backend.md`、`core-engine.md`、`python-general.md`
 
 ---
 

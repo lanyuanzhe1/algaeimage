@@ -1,0 +1,73 @@
+<h2>配色方案选择</h2>
+<p class="subtitle">颜色决定产品的第一印象。当前 V1 用绿色（藻类/生态），模板用蓝青色（科技/监控）</p>
+
+<div class="cards">
+  <div class="card" data-choice="green" onclick="toggleSelect(this)">
+    <div class="card-image" style="padding:24px;text-align:center;">
+      <div style="background:linear-gradient(135deg,#1e6f5c,#29a587);height:48px;border-radius:8px;margin-bottom:12px;"></div>
+      <div style="display:flex;gap:8px;">
+        <div style="flex:1;height:32px;background:#e8f5f0;border-radius:4px;border-left:3px solid #1e6f5c;"></div>
+        <div style="flex:1;height:32px;background:#e8f5f0;border-radius:4px;border-left:3px solid #29a587;"></div>
+      </div>
+      <div style="margin-top:8px;display:flex;gap:6px;">
+        <span style="padding:3px 8px;background:#dc2626;color:#fff;border-radius:3px;font-size:11px;">高危</span>
+        <span style="padding:3px 8px;background:#f59e0b;color:#fff;border-radius:3px;font-size:11px;">中危</span>
+        <span style="padding:3px 8px;background:#16a34a;color:#fff;border-radius:3px;font-size:11px;">低危</span>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>绿色系（当前 V1）</h3>
+      <p>藻类/生态/环保联想。暖色调，亲和力强。与"藻影卫士"品牌名一致。风险色沿用红/黄/绿标准。</p>
+    </div>
+  </div>
+  <div class="card" data-choice="blue" onclick="toggleSelect(this)">
+    <div class="card-image" style="padding:24px;text-align:center;">
+      <div style="background:linear-gradient(135deg,#1976d2,#0891b2);height:48px;border-radius:8px;margin-bottom:12px;"></div>
+      <div style="display:flex;gap:8px;">
+        <div style="flex:1;height:32px;background:rgba(25,118,210,.08);border-radius:4px;border-left:3px solid #1976d2;"></div>
+        <div style="flex:1;height:32px;background:rgba(25,118,210,.08);border-radius:4px;border-left:3px solid #0891b2;"></div>
+      </div>
+      <div style="margin-top:8px;display:flex;gap:6px;">
+        <span style="padding:3px 8px;background:#dc2626;color:#fff;border-radius:3px;font-size:11px;">高危</span>
+        <span style="padding:3px 8px;background:#ea580c;color:#fff;border-radius:3px;font-size:11px;">预警</span>
+        <span style="padding:3px 8px;background:#ca8a04;color:#fff;border-radius:3px;font-size:11px;">注意</span>
+        <span style="padding:3px 8px;background:#16a34a;color:#fff;border-radius:3px;font-size:11px;">低危</span>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>蓝青色系（模板）</h3>
+      <p>科技/监控/精密仪器联想。冷色调，专业感强。与"偏振光学检测"的物理本质呼应。四级风险色（红/橙/黄/绿）。</p>
+    </div>
+  </div>
+</div>
+
+<div class="section" style="margin-top:24px;">
+  <h3>快速对比</h3>
+  <table style="width:100%;font-size:13px;border-collapse:collapse;">
+    <tr style="border-bottom:1px solid rgba(0,0,0,.08);">
+      <th style="text-align:left;padding:8px;"></th>
+      <th style="text-align:left;padding:8px;">绿色系</th>
+      <th style="text-align:left;padding:8px;">蓝青色系</th>
+    </tr>
+    <tr style="border-bottom:1px solid rgba(0,0,0,.08);">
+      <td style="padding:8px;font-weight:600;">联想</td>
+      <td style="padding:8px;">藻类 · 生态 · 环保</td>
+      <td style="padding:8px;">科技 · 光学 · 监控</td>
+    </tr>
+    <tr style="border-bottom:1px solid rgba(0,0,0,.08);">
+      <td style="padding:8px;font-weight:600;">色调</td>
+      <td style="padding:8px;">暖 · 亲和</td>
+      <td style="padding:8px;">冷 · 专业</td>
+    </tr>
+    <tr style="border-bottom:1px solid rgba(0,0,0,.08);">
+      <td style="padding:8px;font-weight:600;">风险等级</td>
+      <td style="padding:8px;">3级 (高/中/低)</td>
+      <td style="padding:8px;">4级 (红/橙/黄/绿)</td>
+    </tr>
+    <tr>
+      <td style="padding:8px;font-weight:600;">品牌</td>
+      <td style="padding:8px;">"藻影" = 绿</td>
+      <td style="padding:8px;">"偏振光学" = 蓝</td>
+    </tr>
+  </table>
+</div>

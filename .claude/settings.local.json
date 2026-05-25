@@ -84,7 +84,9 @@
       "Bash(ls CONTEXT.md)",
       "Bash(ls CONTEXT-MAP.md)",
       "Bash(ls -d docs/adr/)",
-      "Bash(ls -d docs/agents/)"
+      "Bash(ls -d docs/agents/)",
+      "Bash(bash \"C:\\\\Users\\\\HP\\\\.claude\\\\plugins\\\\cache\\\\claude-plugins-official\\\\superpowers\\\\5.1.0\\\\skills\\\\brainstorming\\\\scripts\\\\start-server.sh\" --project-dir e:/code/codex)",
+      "mcp__plugin_playwright_playwright__browser_navigate"
     ],
     "additionalDirectories": [
       "\\tmp"

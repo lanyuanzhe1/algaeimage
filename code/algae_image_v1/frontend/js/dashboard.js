@@ -15,19 +15,50 @@ async function loadDashboard() {
   try {
     var data = await apiRequest('/dashboard/stats');
 
-    // Update stat cards
+    // Update stat cards (3 metrics on dashboard sub-page)
     document.getElementById('statTotal').textContent = (data.total_detections !== undefined ? data.total_detections : '--');
     document.getElementById('statToday').textContent = (data.today_count !== undefined ? data.today_count : '--');
-    document.getElementById('statHighRisk').textContent = ((data.risk_distribution || {}).high !== undefined ? data.risk_distribution.high : '--');
+
+    var riskDist = data.risk_distribution || {};
+    document.getElementById('statHighRisk').textContent = (riskDist.high !== undefined ? riskDist.high : '--');
 
     // Render charts
     renderClassDistribution(data.class_distribution || {});
-    renderRiskDistribution(data.risk_distribution || {});
+    renderRiskDistribution(riskDist);
+
+    // Render recent detections
+    renderRecentDetections(data.recent_detections || []);
 
   } catch (err) {
     showToast('加载仪表板失败: ' + err.message, 'error');
     console.error(err);
   }
+}
+
+// ── Recent Detections List ─────────────────────────────────────────────────
+function renderRecentDetections(recent) {
+  var container = document.getElementById('recentDetections');
+  if (!container) return;
+
+  if (!recent || recent.length === 0) {
+    container.innerHTML = '<div class="empty-state"><p class="empty-text">暂无数据</p></div>';
+    return;
+  }
+
+  container.innerHTML = recent.map(function (item) {
+    var riskLevel = item.risk_level || 'low';
+    var riskLabel = (typeof RISK_LABELS !== 'undefined' ? RISK_LABELS[riskLevel] : riskLevel) || riskLevel;
+    var qScore = item.q_score !== undefined && item.q_score !== null
+      ? (typeof item.q_score === 'number' ? item.q_score.toFixed(2) : item.q_score)
+      : '--';
+    var filename = item.filename || '未知文件';
+    return '<div class="recent-item">' +
+      '<span class="recent-name" title="' + escapeHtml(filename) + '">' + escapeHtml(filename) + '</span>' +
+      '<span style="font-family:var(--font-mono);font-size:12px;">Q=' + qScore + '</span>' +
+      '<span class="risk-badge risk-' + riskLevel + '">' + riskLabel + '</span>' +
+      '<span style="font-size:11px;color:var(--text-muted);">' + formatTime(item.created_at) + '</span>' +
+      '</div>';
+  }).join('');
 }
 
 // ── Class Distribution Pie Chart ───────────────────────────────────────────
@@ -424,6 +455,56 @@ function hslToHex(h, s, l) {
   };
 
   return '#' + toHex(r) + toHex(g) + toHex(b);
+}
+
+// ── Review Tab ─────────────────────────────────────────────────────────────
+async function loadReviewStats() {
+  try {
+    var data = await apiRequest('/dashboard/stats');
+    var total = data.total_detections || 0;
+
+    var elCollect = document.getElementById('reviewStatCollect');
+    var elDetect = document.getElementById('reviewStatDetect');
+    if (elCollect) elCollect.textContent = total;
+    if (elDetect) elDetect.textContent = total;
+  } catch (err) {
+    // Silently fail — review stats are non-critical
+    console.error('Load review stats failed:', err);
+  }
+}
+
+async function loadReviewQueue() {
+  var container = document.getElementById('reviewQueue');
+  if (!container) return;
+
+  try {
+    var data = await apiRequest('/history?page=1&limit=10');
+    var items = data.items || [];
+
+    if (items.length === 0) {
+      container.innerHTML = '<div class="empty-state"><span class="empty-icon">&#128221;</span><p class="empty-text">暂无待复核样本</p><p class="empty-hint">当检测置信度低于阈值时，记录将自动进入复核队列</p></div>';
+      return;
+    }
+
+    // Show recent items as review candidates
+    container.innerHTML = items.map(function (item) {
+      var riskLevel = item.risk_level || 'low';
+      var riskLabel = (typeof RISK_LABELS !== 'undefined' ? RISK_LABELS[riskLevel] : riskLevel) || riskLevel;
+      var qScore = item.q_score !== undefined && item.q_score !== null
+        ? (typeof item.q_score === 'number' ? item.q_score.toFixed(2) : item.q_score)
+        : '--';
+      var needsReview = (typeof item.q_score === 'number' && item.q_score < 0.7) || riskLevel === 'high';
+      return '<div class="recent-item">' +
+        '<span class="recent-name">' + escapeHtml(item.filename || '未知') + '</span>' +
+        '<span style="font-family:var(--font-mono);font-size:12px;">Q=' + qScore + '</span>' +
+        '<span class="risk-badge risk-' + riskLevel + '">' + riskLabel + '</span>' +
+        (needsReview ? '<button class="btn btn-sm btn-primary" onclick="viewHistoryDetail(\'' + item.id + '\')">复核</button>' : '<span style="font-size:11px;color:var(--text-muted);">已确认</span>') +
+        '</div>';
+    }).join('');
+  } catch (err) {
+    console.error('Load review queue failed:', err);
+    container.innerHTML = '<div class="empty-state"><p class="empty-text">加载失败</p></div>';
+  }
 }
 
 // ── Utility ────────────────────────────────────────────────────────────────

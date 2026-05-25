@@ -219,6 +219,15 @@ async function runSingleDetection() {
   btn.disabled = true;
   btn.innerHTML = '<span class="spinner"></span> 检测中...';
 
+  // Animate pipeline through stages
+  updatePipeline(0);
+  var pipeTimer = setInterval(function () {
+    var steps = document.querySelectorAll('.pipe-step');
+    var current = -1;
+    steps.forEach(function (s, i) { if (s.classList.contains('active')) current = i; });
+    if (current < 4) updatePipeline(current + 1);
+  }, 600);
+
   try {
     var formData = new FormData();
     formData.append('file', selectedFiles[0]);
@@ -228,6 +237,10 @@ async function runSingleDetection() {
       body: formData,
     });
 
+    clearInterval(pipeTimer);
+    completePipeline();
+    setTimeout(function () { resetPipeline(); }, 2000);
+
     renderResult(data);
     showToast('检测完成', 'success');
 
@@ -236,6 +249,8 @@ async function runSingleDetection() {
     if (currentTab === 'history') loadHistory(currentHistoryPage);
 
   } catch (err) {
+    clearInterval(pipeTimer);
+    resetPipeline();
     showToast('检测失败: ' + err.message, 'error');
     console.error(err);
   } finally {
@@ -315,6 +330,15 @@ async function runBatchDetection() {
   btn.disabled = true;
   btn.innerHTML = '<span class="spinner"></span> 处理中...';
 
+  // Animate pipeline
+  updatePipeline(0);
+  var pipeTimer = setInterval(function () {
+    var steps = document.querySelectorAll('.pipe-step');
+    var current = -1;
+    steps.forEach(function (s, i) { if (s.classList.contains('active')) current = i; });
+    if (current < 4) updatePipeline(current + 1);
+  }, 800);
+
   // Show progress bar
   var progressWrap = document.getElementById('progressWrap');
   var progressFill = document.getElementById('progressFill');
@@ -346,8 +370,12 @@ async function runBatchDetection() {
     });
 
     clearInterval(progressInterval);
+    clearInterval(pipeTimer);
     progressFill.style.width = '100%';
     progressText.textContent = '处理完成: ' + selectedFiles.length + ' 张图片';
+
+    completePipeline();
+    setTimeout(function () { resetPipeline(); }, 2000);
 
     renderBatchResult(data);
     showToast('批量检测完成', 'success');
@@ -358,6 +386,8 @@ async function runBatchDetection() {
 
   } catch (err) {
     clearInterval(progressInterval);
+    clearInterval(pipeTimer);
+    resetPipeline();
     progressFill.style.width = '0%';
     progressWrap.classList.remove('visible');
     showToast('批量检测失败: ' + err.message, 'error');
@@ -452,7 +482,7 @@ function escapeHtml(str) {
 // ── View History Detail (called from dashboard.js, renders in detect tab) ──
 async function viewHistoryDetail(id) {
   currentHistoryDetailId = id;
-  switchTab('detect');
+  switchPage('home');
 
   var emptyEl = document.getElementById('resultEmpty');
   var contentEl = document.getElementById('resultContent');

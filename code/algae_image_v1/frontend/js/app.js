@@ -1,93 +1,211 @@
 /**
  * Algae Guardian V1.0 — Main Application
- * Tab switching, constants, and shared utilities.
+ * Navigation, pipeline animation, shared utilities, report modal.
  */
 
 const API = '/api/v1';
 
 // ── State ──────────────────────────────────────────────────────────────────
-let currentTab = 'detect';
-let currentHistoryPage = 1;
-let currentHistoryDetailId = null;
+var currentPage = 'home';
+var currentTab = 'home';  // backward compat for detection.js
+var currentHistoryPage = 1;
+var currentHistoryDetailId = null;
 
 // ── DOM Ready ──────────────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', function () {
-  initTabs();
+  initNavigation();
+  initReportModal();
+  loadHomeMetrics();
 });
 
-// ── Tab Switching ──────────────────────────────────────────────────────────
-function initTabs() {
-  const tabButtons = document.querySelectorAll('.tab-btn:not([disabled])');
-
-  tabButtons.forEach(function (btn) {
+// ── Navigation ─────────────────────────────────────────────────────────────
+function initNavigation() {
+  document.querySelectorAll('#navBar .nav-btn:not([disabled])').forEach(function (btn) {
     btn.addEventListener('click', function () {
-      const tabName = btn.getAttribute('data-tab');
-      switchTab(tabName);
+      switchPage(btn.getAttribute('data-page'));
     });
   });
 }
 
-function switchTab(tabName) {
-  if (currentTab === tabName) return;
-  currentTab = tabName;
+// Backward compat for detection.js (viewHistoryDetail calls switchTab)
+function switchTab(pageName) {
+  // Map old tab names to new page names
+  var map = { detect: 'home', history: 'history', dashboard: 'dashboard' };
+  switchPage(map[pageName] || pageName);
+}
 
-  // Update button active states
-  document.querySelectorAll('.tab-btn').forEach(function (btn) {
-    btn.classList.toggle('active', btn.getAttribute('data-tab') === tabName);
+function switchPage(pageName) {
+  if (currentPage === pageName) return;
+  currentPage = pageName;
+  currentTab = pageName;  // sync backward-compat var for detection.js
+
+  // Update nav button states
+  document.querySelectorAll('#navBar .nav-btn').forEach(function (btn) {
+    btn.classList.toggle('active', btn.getAttribute('data-page') === pageName);
   });
 
-  // Update content visibility
-  document.querySelectorAll('.tab-content').forEach(function (content) {
-    content.classList.toggle('active', content.id === 'tab-' + tabName);
+  // Show/hide page panels
+  document.querySelectorAll('.page-panel').forEach(function (panel) {
+    panel.classList.toggle('active', panel.id === 'page-' + pageName);
   });
 
-  // Trigger tab-specific loading
-  if (tabName === 'dashboard') {
+  // Show/hide main-layout sections (only for home page)
+  var mainLayout = document.querySelector('.main-layout');
+  if (mainLayout) {
+    mainLayout.style.display = (pageName === 'home') ? '' : 'none';
+  }
+
+  // Page-specific loading
+  if (pageName === 'dashboard' || pageName === 'home') {
     loadDashboard();
-  } else if (tabName === 'history') {
+  }
+  if (pageName === 'history') {
     loadHistory(currentHistoryPage);
   }
 }
 
+// ── Pipeline Animation ─────────────────────────────────────────────────────
+var _pipelineTimer = null;
+
+function updatePipeline(activeIndex) {
+  document.querySelectorAll('.pipe-step').forEach(function (step, i) {
+    step.classList.toggle('active', i === activeIndex);
+    step.classList.toggle('done', i < activeIndex);
+  });
+}
+
+function completePipeline() {
+  document.querySelectorAll('.pipe-step').forEach(function (step) {
+    step.classList.add('done');
+    step.classList.remove('active');
+  });
+}
+
+function resetPipeline() {
+  document.querySelectorAll('.pipe-step').forEach(function (step) {
+    step.classList.remove('active', 'done');
+  });
+  if (_pipelineTimer) {
+    clearInterval(_pipelineTimer);
+    _pipelineTimer = null;
+  }
+}
+
+// ── Homepage Metrics ───────────────────────────────────────────────────────
+async function loadHomeMetrics() {
+  try {
+    var data = await apiRequest('/dashboard/stats');
+
+    // Top metrics row
+    document.getElementById('metricTotal').textContent = (data.total_detections !== undefined ? data.total_detections : '--');
+    document.getElementById('metricToday').textContent = (data.today_count !== undefined ? data.today_count : '--');
+    var riskDist = data.risk_distribution || {};
+    document.getElementById('metricHighRisk').textContent = (riskDist.high !== undefined ? riskDist.high : '--');
+
+    // Average Q score
+    var recent = data.recent_detections || [];
+    if (recent.length > 0) {
+      var sumQ = 0, countQ = 0;
+      recent.forEach(function (r) {
+        if (r.q_score !== undefined && r.q_score !== null) { sumQ += r.q_score; countQ++; }
+      });
+      document.getElementById('metricAvgQ').textContent = countQ > 0 ? (sumQ / countQ).toFixed(2) : '--';
+    } else {
+      document.getElementById('metricAvgQ').textContent = '--';
+    }
+
+    // Active class count
+    var classDist = data.class_distribution || {};
+    var classKeys = Object.keys(classDist);
+    document.getElementById('metricClassCount').textContent = classKeys.length || '--';
+
+    // Left panel stats
+    document.getElementById('homeStatTotal').textContent = (data.total_detections !== undefined ? data.total_detections : '--');
+    document.getElementById('homeStatToday').textContent = (data.today_count !== undefined ? data.today_count : '--');
+    document.getElementById('homeStatHighRisk').textContent = (riskDist.high !== undefined ? riskDist.high : '--');
+
+    // Right panel: recent detections
+    renderHomeRecent(recent);
+
+  } catch (err) {
+    console.error('Load home metrics failed:', err);
+  }
+}
+
+function renderHomeRecent(recent) {
+  var container = document.getElementById('homeRecentList');
+  if (!container) return;
+
+  if (!recent || recent.length === 0) {
+    container.innerHTML = '<div class="empty-state"><p class="empty-text">暂无数据</p></div>';
+    return;
+  }
+
+  container.innerHTML = recent.slice(0, 5).map(function (item) {
+    var riskLevel = item.risk_level || 'low';
+    var riskLabel = (typeof RISK_LABELS !== 'undefined' ? RISK_LABELS[riskLevel] : riskLevel) || riskLevel;
+    var qScore = item.q_score !== undefined && item.q_score !== null
+      ? (typeof item.q_score === 'number' ? item.q_score.toFixed(2) : item.q_score)
+      : '--';
+    var filename = item.filename || '未知文件';
+    return '<div class="recent-item">' +
+      '<span class="recent-name" title="' + escapeHtml(filename) + '">' + escapeHtml(filename) + '</span>' +
+      '<span style="font-family:var(--font-mono);font-size:12px;">Q=' + qScore + '</span>' +
+      '<span class="risk-badge risk-' + riskLevel + '">' + riskLabel + '</span>' +
+      '<span style="font-size:11px;color:var(--muted);">' + formatTime(item.created_at || item.timestamp || item.detect_time) + '</span>' +
+      '</div>';
+  }).join('');
+}
+
+// ── Report Modal ───────────────────────────────────────────────────────────
+function initReportModal() {
+  document.getElementById('reportBtn').addEventListener('click', function () {
+    var totalEl = document.getElementById('metricTotal');
+    var highRiskEl = document.getElementById('metricHighRisk');
+    var todayEl = document.getElementById('metricToday');
+    var total = totalEl ? totalEl.textContent : '--';
+    var highRisk = highRiskEl ? highRiskEl.textContent : '--';
+    var today = todayEl ? todayEl.textContent : '--';
+
+    document.getElementById('reportText').textContent =
+      '藻影卫士 V1.0 当前监测状态：累计检测 ' + total + ' 次，今日 ' + today + ' 次，' +
+      '高危预警 ' + highRisk + ' 条。系统基于结构张量偏振模拟 + RDN偏振重建 + YOLOv8s检测管线运行。';
+    document.getElementById('reportSuggestion').textContent =
+      '建议：持续监控藻密度变化趋势，对高危样本及时复核确认。定期检查模型性能，必要时触发增量再训练。';
+    document.getElementById('reportModal').classList.add('show');
+  });
+
+  document.getElementById('closeModal').addEventListener('click', function () {
+    document.getElementById('reportModal').classList.remove('show');
+  });
+  document.getElementById('reportModal').addEventListener('click', function (event) {
+    if (event.target.id === 'reportModal') {
+      document.getElementById('reportModal').classList.remove('show');
+    }
+  });
+}
+
 // ── Utilities ──────────────────────────────────────────────────────────────
 
-/**
- * Format a Unix timestamp (seconds or milliseconds) to locale string.
- * @param {number|string} ts
- * @returns {string}
- */
 function formatTime(ts) {
   if (!ts) return '--';
   var num = typeof ts === 'string' ? parseInt(ts, 10) : ts;
-  // Heuristic: if less than 1e12, treat as seconds
   if (num < 1e12) num = num * 1000;
   var d = new Date(num);
   if (isNaN(d.getTime())) return '--';
   return d.toLocaleString('zh-CN', {
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit',
+    year: 'numeric', month: '2-digit', day: '2-digit',
+    hour: '2-digit', minute: '2-digit', second: '2-digit',
   });
 }
 
-/**
- * Show a toast notification.
- * @param {string} message
- * @param {'success'|'error'|'warning'|'info'} type
- * @param {number} duration - ms, default 3000
- */
 function showToast(message, type, duration) {
   type = type || 'info';
   duration = duration || 3000;
-
   var toast = document.createElement('div');
   toast.className = 'toast ' + type;
   toast.textContent = message;
   document.body.appendChild(toast);
-
   setTimeout(function () {
     toast.style.opacity = '0';
     toast.style.transition = 'opacity 0.3s';
@@ -97,44 +215,25 @@ function showToast(message, type, duration) {
   }, duration);
 }
 
-/**
- * Toggle element visibility by class.
- * @param {HTMLElement|string} el - element or id
- * @param {boolean} show
- */
 function toggleVisibility(el, show) {
   if (typeof el === 'string') el = document.getElementById(el);
   if (!el) return;
-  if (show) {
-    el.classList.remove('hidden');
-  } else {
-    el.classList.add('hidden');
-  }
+  if (show) { el.classList.remove('hidden'); }
+  else { el.classList.add('hidden'); }
 }
 
-/**
- * Set inner HTML of an element by id.
- * @param {string} id
- * @param {string} html
- */
 function setHTML(id, html) {
   var el = document.getElementById(id);
   if (el) el.innerHTML = html;
 }
 
-/**
- * Make an API request with error handling.
- * @param {string} url
- * @param {object} options - fetch options
- * @returns {Promise<object>}
- */
 async function apiRequest(url, options) {
   var opts = options || {};
   try {
     var response = await fetch(API + url, opts);
     if (!response.ok) {
       var errorBody = '';
-      try { errorBody = await response.text(); } catch (e) { /* ignore */ }
+      try { errorBody = await response.text(); } catch (e) {}
       throw new Error('HTTP ' + response.status + ': ' + (errorBody || response.statusText));
     }
     return await response.json();

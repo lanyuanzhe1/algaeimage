@@ -13,9 +13,10 @@ var currentHistoryDetailId = null;
 
 // ── DOM Ready ──────────────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', function () {
-  initNavigation();
-  initReportModal();
-  loadHomeMetrics();
+  try { initNavigation(); } catch (e) { console.error('initNavigation failed:', e); }
+  try { initReportModal(); } catch (e) { console.error('initReportModal failed:', e); }
+  try { loadHomeMetrics(); } catch (e) { console.error('loadHomeMetrics failed:', e); }
+  // loadHomeMetrics is async — errors surface in its own catch block
 });
 
 // ── Navigation ─────────────────────────────────────────────────────────────
@@ -136,6 +137,7 @@ async function loadHomeMetrics() {
 
   } catch (err) {
     console.error('Load home metrics failed:', err);
+    showToast('首页数据加载失败，请确认后端服务已启动', 'warning', 5000);
   }
 }
 
@@ -166,7 +168,15 @@ function renderHomeRecent(recent) {
 
 // ── Report Modal ───────────────────────────────────────────────────────────
 function initReportModal() {
-  document.getElementById('reportBtn').addEventListener('click', function () {
+  var reportBtn = document.getElementById('reportBtn');
+  var closeBtn = document.getElementById('closeModal');
+  var modal = document.getElementById('reportModal');
+  if (!reportBtn || !closeBtn || !modal) {
+    console.warn('initReportModal: required DOM elements missing');
+    return;
+  }
+
+  reportBtn.addEventListener('click', function () {
     var totalEl = document.getElementById('metricTotal');
     var highRiskEl = document.getElementById('metricHighRisk');
     var todayEl = document.getElementById('metricToday');
@@ -179,15 +189,15 @@ function initReportModal() {
       '高危预警 ' + highRisk + ' 条。系统基于结构张量偏振模拟 + RDN偏振重建 + YOLOv8s检测管线运行。';
     document.getElementById('reportSuggestion').textContent =
       '建议：持续监控藻密度变化趋势，对高危样本及时复核确认。定期检查模型性能，必要时触发增量再训练。';
-    document.getElementById('reportModal').classList.add('show');
+    modal.classList.add('show');
   });
 
-  document.getElementById('closeModal').addEventListener('click', function () {
-    document.getElementById('reportModal').classList.remove('show');
+  closeBtn.addEventListener('click', function () {
+    modal.classList.remove('show');
   });
-  document.getElementById('reportModal').addEventListener('click', function (event) {
-    if (event.target.id === 'reportModal') {
-      document.getElementById('reportModal').classList.remove('show');
+  modal.addEventListener('click', function (event) {
+    if (event.target === modal) {
+      modal.classList.remove('show');
     }
   });
 }
@@ -245,7 +255,8 @@ async function apiRequest(url, options) {
     }
     return await response.json();
   } catch (err) {
-    if (err.name === 'TypeError' && err.message.includes('fetch')) {
+    // fetch() throws TypeError for network errors in all browsers
+    if (err instanceof TypeError && /fetch|network|failed/i.test(err.message || '')) {
       throw new Error('无法连接到后端服务，请确认服务器已启动 (localhost:8000)');
     }
     throw err;

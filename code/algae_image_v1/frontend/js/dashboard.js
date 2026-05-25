@@ -92,9 +92,6 @@ function renderClassDistribution(distribution) {
     chartClassDist = null;
   }
 
-  var labels = Object.keys(distribution);
-  var values = Object.values(distribution);
-
   if (labels.length === 0) {
     // Draw empty chart placeholder
     chartClassDist = new Chart(ctx, {
@@ -288,7 +285,7 @@ function renderHistoryTable(items) {
 
   tbody.innerHTML = items.map(function (item) {
     var riskLevel = item.risk_level || 'low';
-    var riskLabel = RISK_LABELS[riskLevel] || riskLevel;
+    var riskLabel = (typeof RISK_LABELS !== 'undefined' ? RISK_LABELS[riskLevel] : riskLevel) || riskLevel;
     var qScore = item.q_score !== undefined && item.q_score !== null
       ? (typeof item.q_score === 'number' ? item.q_score.toFixed(2) : item.q_score)
       : '--';

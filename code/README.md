@@ -65,12 +65,65 @@ cd algae_image_v1
 # 双击 run.bat 或:
 conda activate ican
 python -m uvicorn backend.app.main:app --host 0.0.0.0 --port 8000
-# 浏览器打开 http://localhost:8000/app/
+```
+
+### 访问
+
+| URL | 说明 |
+|-----|------|
+| `http://localhost:8000/app/` | 前端界面（Dashboard 首页） |
+| `http://localhost:8000/docs` | Swagger API 文档 |
+
+## V1 前端界面
+
+蓝青色监控仪表板，6 页面 SPA（`frontend/index.html`），无构建工具，Chart.js 4.4.0 CDN。
+
+### 导航
+
+| 页面 | 状态 | 功能 |
+|------|------|------|
+| **首页** | 可用 | Dashboard 总览：5 指标卡 + 3 栏布局（统计/检测上传/最近记录+风险摘要+数据闭环） |
+| **检测工具** | 可用 | 跳转回首页检测区（核心功能聚集在首页） |
+| **历史记录** | 可用 | 分页表格，支持查看详情/删除，Q 质量评分 + 风险等级 |
+| **数据统计** | 可用 | Chart.js 饼图（藻类分布）+ 柱状图（风险分布）+ 最近检测列表 |
+| **设备管理** | 占位 | 静态展示，后续版本开放 |
+| **人工复核** | 占位 | 数据闭环 4 步示意图，后续版本开放 |
+
+### 处理管线可视化
+
+顶部管线 bar 实时展示 5 阶段流程：
+
+```
+①偏振暗场采集 → ②Stokes重建 → ③图像增强 → ④YOLO识别计数 → ⑤融合预警
+```
+
+检测时管线步骤依次高亮，完成后全部标记绿色 ✓。
+
+### 其他功能
+
+- **导出报告**：点击顶栏按钮，弹窗汇总当前统计数据
+- **管线动画**：提交检测时 5 步依次激活（600ms/步），完成后 2s 自动重置
+- **自动刷新**：首页每 60s 自动拉取最新统计数据
+- **四级风险色**：红（高危）/ 橙（预警）/ 黄（注意）/ 绿（低风险）
+
+## 测试
+
+```bash
+cd algae_image_v1
+conda activate ican
+
+# 前端结构测试（30 用例）
+python -m pytest tests/test_frontend.py -v
+
+# 核心管线测试（14 用例，需要模型权重）
+python -m pytest tests/test_pipeline.py -v
 ```
 
 ## 关键文档
 
 - 产品设计规格: `algae_image_v1/docs/V1_design_spec.md`
+- **前端改版设计**: `../docs/superpowers/specs/2026-05-25-v1-frontend-redesign-design.md`
+- **前端改版计划**: `../docs/superpowers/plans/2026-05-25-v1-frontend-redesign-plan.md`
 - 实施计划: `algae_image_v1/docs/superpowers/plans/2026-05-24-V1-implementation.md`
 - 全链路训练总结: `../docs/algae_polarization_training_summary_20260523.md`
 - 结构张量管线设计: `Polar_sim_0520/docs/pipeline_design.md`

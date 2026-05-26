@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>藻影知微 — 有害藻华早期预警平台</title>
+  <link rel="stylesheet" href="css/style.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+<body>
+  <main class="app">
+
+    <!-- ═══ Top Bar ═══ -->
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand-mark">藻</div>
+        <div>
+          <h1>藻影知微 有害藻华早期预警平台</h1>
+          <p class="subtitle">基于偏振成像与深度学习图像识别的智能监测系统</p>
+        </div>
+      </div>
+      <div class="top-actions">
+        <div class="status-pill"><i class="status-dot"></i>系统在线</div>
+        <button class="btn" id="refreshBtn" onclick="location.reload()">刷新</button>
+        <button class="btn btn-primary" id="reportBtn">导出报告</button>
+      </div>
+    </header>
+
+    <!-- ═══ Navigation ═══ -->
+    <nav class="navbar" id="navBar">
+      <button class="nav-btn active" data-page="home">首页</button>
+      <button class="nav-btn" data-page="detect">检测工具</button>
+      <button class="nav-btn" data-page="history">历史记录</button>
+      <button class="nav-btn" data-page="dashboard">数据统计</button>
+      <button class="nav-btn" data-page="devices" disabled>设备管理</button>
+      <button class="nav-btn" data-page="review" disabled>人工复核</button>
+    </nav>
+
+    <!-- ═══ Pipeline Bar ═══ -->
+    <div class="pipeline-bar" id="pipelineBar">
+      <div class="pipe-step" data-pipe="0">
+        <span class="num">1</span>
+        <div class="info"><strong>偏振暗场采集</strong><small>DoFP相机 · 多角度</small></div>
+      </div>
+      <span class="pipe-arrow">→</span>
+      <div class="pipe-step" data-pipe="1">
+        <span class="num">2</span>
+        <div class="info"><strong>Stokes重建</strong><small>S0/S1/S2 · RDN</small></div>
+      </div>
+      <span class="pipe-arrow">→</span>
+      <div class="pipe-step" data-pipe="2">
+        <span class="num">3</span>
+        <div class="info"><strong>图像增强</strong><small>去散射 · 对比度</small></div>
+      </div>
+      <span class="pipe-arrow">→</span>
+      <div class="pipe-step" data-pipe="3">
+        <span class="num">4</span>
+        <div class="info"><strong>YOLO识别计数</strong><small>分类 · 框选 · 浓度</small></div>
+      </div>
+      <span class="pipe-arrow">→</span>
+      <div class="pipe-step" data-pipe="4">
+        <span class="num">5</span>
+        <div class="info"><strong>融合预警</strong><small>风险分级 · 四级预警</small></div>
+      </div>
+    </div>
+
+    <!-- ═══ Metrics Cards ═══ -->
+    <section class="metrics-row" id="metricsRow">
+      <article class="metric-card">
+        <span class="metric-label">总检测次数</span>
+        <strong class="metric-value" id="metricTotal">--</strong>
+        <small class="metric-sub">累计检测样本</small>
+      </article>
+      <article class="metric-card">
+        <span class="metric-label">今日检测</span>
+        <strong class="metric-value" id="metricToday">--</strong>
+        <small class="metric-sub">当日处理量</small>
+      </article>
+      <article class="metric-card">
+        <span class="metric-label">高危预警</span>
+        <strong class="metric-value danger" id="metricHighRisk">--</strong>
+        <small class="metric-sub">需立即关注</small>
+      </article>
+      <article class="metric-card">
+        <span class="metric-label">平均质量分</span>
+        <strong class="metric-value" id="metricAvgQ">--</strong>
+        <small class="metric-sub">Q Score · 图像质量</small>
+      </article>
+      <article class="metric-card">
+        <span class="metric-label">活跃藻种</span>
+        <strong class="metric-value" id="metricClassCount">--</strong>
+        <small class="metric-sub">检出类别数</small>
+      </article>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════════════════════
+         PAGE: Home Dashboard (default)
+         ═══════════════════════════════════════════════════════════════ -->
+    <section class="page-panel active" id="page-home">
+      <div class="main-layout">
+        <!-- Left Panel: Stats + Quick Actions -->
+        <aside class="panel">
+          <div class="panel-head">
+            <div>
+              <h2 class="panel-title">数据概览</h2>
+              <p class="panel-subtitle">实时统计 · 快速操作</p>
+            </div>
+          </div>
+          <div class="stat-list">
+            <div class="stat-item">
+              <div class="stat-num" id="homeStatTotal">--</div>
+              <div class="stat-text">总检测次数</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-num" id="homeStatToday">--</div>
+              <div class="stat-text">今日检测</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-num" style="color:var(--risk-red);" id="homeStatHighRisk">--</div>
+              <div class="stat-text">高危预警</div>
+            </div>
+          </div>
+          <div class="quick-actions">
+            <button class="btn btn-primary" onclick="switchPage('detect')" style="width:100%;justify-content:center;padding:12px;">
+              开始新检测
+            </button>
+            <button class="btn" onclick="switchPage('history')" style="width:100%;justify-content:center;">
+              查看历史记录
+            </button>
+          </div>
+        </aside>
+
+        <!-- Center Panel: Detection -->
+        <section class="panel">
+          <div class="panel-head">
+            <div>
+              <h2 class="panel-title">快速检测</h2>
+              <p class="panel-subtitle">上传藻类显微图像 · 偏振分析 · YOLO识别</p>
+            </div>
+          </div>
+          <div class="panel-body">
+            <!-- Upload Zone — IDs preserved for detection.js -->
+            <div class="upload-zone" id="uploadZone">
+              <span class="upload-icon">🔬</span>
+              <p class="upload-text">拖拽图片到此处 或 点击选择文件</p>
+              <p class="upload-hint">支持 JPG / PNG / TIFF / BMP 格式，最大 50 张</p>
+              <input type="file" id="fileInput" accept="image/jpeg,image/png,image/tiff,.tif,.bmp,image/bmp" multiple hidden>
+              <input type="file" id="folderInput" webkitdirectory hidden>
+              <img id="previewImage" class="preview-thumb hidden" alt="预览">
+            </div>
+            <div class="btn-group mt-md">
+              <button class="btn btn-outline" id="btnSelectFolder">选择文件夹</button>
+              <button class="btn btn-primary" id="btnSingleDetect" disabled>单图检测</button>
+              <button class="btn" id="btnBatchDetect" disabled>批量处理</button>
+            </div>
+            <p class="text-sm text-muted mt-md" id="fileCountLabel"></p>
+            <!-- Progress bar — IDs preserved -->
+            <div class="progress-bar-wrap" id="progressWrap">
+              <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+              <p class="progress-text" id="progressText"></p>
+            </div>
+            <!-- Result — IDs preserved -->
+            <div class="result-panel mt-md" id="resultPanel">
+              <div class="panel-header">
+                <span>检测结果</span>
+                <span class="text-sm text-muted" id="resultTime" style="display:none;"></span>
+              </div>
+              <div class="panel-body">
+                <div class="empty-state" id="resultEmpty">
+                  <span class="empty-icon">📆</span>
+                  <p class="empty-text">暂无检测结果</p>
+                  <p class="empty-hint">请上传图片后点击检测</p>
+                </div>
+                <div id="resultContent" class="hidden">
+                  <img id="resultImage" class="result-image" alt="检测结果">
+                  <div class="result-meta" id="resultMeta"></div>
+                  <ul class="detect-list" id="detectList"></ul>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Right Panel: Recent + Placeholders -->
+        <aside class="right-panel">
+          <!-- Recent Detections -->
+          <section class="panel">
+            <div class="panel-head">
+              <div>
+                <h2 class="panel-title">最近检测</h2>
+                <p class="panel-subtitle">最新提交的检测记录</p>
+              </div>
+            </div>
+            <div class="recent-list" id="homeRecentList">
+              <div class="empty-state"><p class="empty-text">暂无数据</p></div>
+            </div>
+          </section>
+
+          <!-- Risk Summary (placeholder) -->
+          <section class="panel">
+            <div class="panel-head">
+              <div>
+                <h2 class="panel-title">风险摘要</h2>
+                <p class="panel-subtitle">四级预警体系</p>
+              </div>
+            </div>
+            <div class="placeholder-section">
+              <div style="display:flex;gap:4px;justify-content:center;flex-wrap:wrap;margin-bottom:12px;">
+                <span class="risk-badge risk-high">红色·高危</span>
+                <span class="risk-badge risk-medium" style="color:var(--risk-orange);background:var(--risk-orange-bg);">橙色·预警</span>
+                <span class="risk-badge risk-medium">黄色·注意</span>
+                <span class="risk-badge risk-low">绿色·低风险</span>
+              </div>
+              <p class="ph-desc">
+                红色：有害藻华爆发，需立即应急处置<br>
+                橙色：藻密度快速上升，建议现场确认<br>
+                黄色：指标抬升，增加采样频率<br>
+                绿色：处于背景水平，正常监测
+              </p>
+            </div>
+          </section>
+
+          <!-- Data Loop (placeholder) -->
+          <section class="panel">
+            <div class="panel-head">
+              <div>
+                <h2 class="panel-title">数据闭环</h2>
+                <p class="panel-subtitle">采集 → 识别 → 复核 → 再训练</p>
+              </div>
+            </div>
+            <div class="loop-flow">
+              <div class="loop-node done">
+                <span class="dot">✓</span><label>采集</label>
+                <small style="color:var(--muted);">偏振暗场成像</small>
+              </div>
+              <div class="loop-node done">
+                <span class="dot">✓</span><label>识别</label>
+                <small style="color:var(--muted);">YOLO分类计数</small>
+              </div>
+              <div class="loop-node">
+                <span class="dot">3</span><label>复核</label>
+                <small style="color:var(--muted);">等待专家确认</small>
+              </div>
+              <div class="loop-node">
+                <span class="dot">4</span><label>再训练</label>
+                <small style="color:var(--muted);">待加入样本池</small>
+              </div>
+            </div>
+            <div class="placeholder-section" style="padding-top:8px;">
+              <p class="ph-desc">人工复核与增量训练功能将在后续版本开放</p>
+            </div>
+          </section>
+        </aside>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════════════════════
+         PAGE: Detection (dedicated page)
+         ═══════════════════════════════════════════════════════════════ -->
+    <section class="page-panel" id="page-detect">
+      <div class="page-inner">
+        <div class="main-layout" style="grid-template-columns:1fr;">
+          <section class="panel">
+            <div class="panel-head">
+              <div>
+                <h2 class="panel-title">检测工具</h2>
+                <p class="panel-subtitle">上传藻类显微图像进行分析</p>
+              </div>
+            </div>
+            <div class="panel-body">
+              <p class="text-sm text-muted mb-md">请使用首页进行检测操作，或在此查看当前检测结果。</p>
+              <button class="btn btn-primary" onclick="switchPage('home')">返回首页检测</button>
+            </div>
+          </section>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════════════════════
+         PAGE: History
+         ═══════════════════════════════════════════════════════════════ -->
+    <section class="page-panel" id="page-history">
+      <div class="page-inner">
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>时间</th><th>文件名</th><th>风险等级</th><th>检测数量</th><th>质量评分</th><th>操作</th>
+              </tr>
+            </thead>
+            <tbody id="historyTableBody">
+              <tr><td colspan="6">
+                <div class="empty-state">
+                  <span class="empty-icon">📄</span>
+                  <p class="empty-text">暂无检测记录</p>
+                  <p class="empty-hint">完成检测后记录将显示在此处</p>
+                </div>
+              </td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="pagination" id="historyPagination"></div>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════════════════════
+         PAGE: Dashboard / Stats
+         ═══════════════════════════════════════════════════════════════ -->
+    <section class="page-panel" id="page-dashboard">
+      <div class="page-inner">
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-value" id="statTotal">--</div>
+            <div class="stat-label">总检测次数</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value" id="statToday">--</div>
+            <div class="stat-label">今日检测</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value high-risk" id="statHighRisk">--</div>
+            <div class="stat-label">高危预警</div>
+          </div>
+        </div>
+        <div class="charts-grid">
+          <div class="chart-card">
+            <div class="chart-title">藻类分布</div>
+            <canvas id="chartClassDist"></canvas>
+          </div>
+          <div class="chart-card">
+            <div class="chart-title">风险分布</div>
+            <canvas id="chartRiskDist"></canvas>
+          </div>
+        </div>
+        <div style="margin-top:var(--spacing-lg);">
+          <div class="chart-card">
+            <div class="chart-title">最近检测记录</div>
+            <div id="recentDetections" style="padding:8px;"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════════════════════
+         PAGE: Devices (placeholder)
+         ═══════════════════════════════════════════════════════════════ -->
+    <section class="page-panel" id="page-devices">
+      <div class="page-inner">
+        <div class="panel">
+          <div class="panel-head">
+            <div>
+              <h2 class="panel-title">设备管理</h2>
+              <p class="panel-subtitle">偏振相机 · 暗场光源 · 运维状态</p>
+            </div>
+          </div>
+          <div class="placeholder-section">
+            <span class="ph-icon">⚙</span>
+            <p class="ph-title">设备管理模块将在后续版本开放</p>
+            <p class="ph-desc">届时支持：DoFP偏振相机状态监控 · 暗场光源校准 · 成像窗口清洁度检测 · 网络链路诊断</p>
+          </div>
+          <div style="padding:0 16px 16px;display:grid;gap:10px;max-width:400px;margin:0 auto;">
+            <div class="recent-item">
+              <span>偏振相机</span>
+              <div class="progress-bar" style="width:96px;"><div class="progress-fill" style="width:100%;background:var(--risk-green);"></div></div>
+            </div>
+            <div class="recent-item">
+              <span>暗场光源</span>
+              <div class="progress-bar" style="width:96px;"><div class="progress-fill" style="width:100%;background:var(--risk-green);"></div></div>
+            </div>
+            <div class="recent-item">
+              <span>网络链路</span>
+              <div class="progress-bar" style="width:96px;"><div class="progress-fill" style="width:100%;background:var(--risk-green);"></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════════════════════
+         PAGE: Review (placeholder)
+         ═══════════════════════════════════════════════════════════════ -->
+    <section class="page-panel" id="page-review">
+      <div class="page-inner">
+        <div class="panel">
+          <div class="panel-head">
+            <div>
+              <h2 class="panel-title">人工复核</h2>
+              <p class="panel-subtitle">专家确认 · 标注修正 · 加入训练集</p>
+            </div>
+          </div>
+          <div class="placeholder-section">
+            <span class="ph-icon">✓</span>
+            <p class="ph-title">人工复核模块将在后续版本开放</p>
+            <p class="ph-desc">届时支持：低置信度样本专家确认 · 误检/漏检标注修正 · 样本加入增量训练池 · 复核历史追踪</p>
+          </div>
+          <div class="loop-flow" style="max-width:500px;margin:0 auto 16px;">
+            <div class="loop-node done"><span class="dot">✓</span><label>采集</label><small style="color:var(--muted);">偏振成像</small></div>
+            <div class="loop-node done"><span class="dot">✓</span><label>识别</label><small style="color:var(--muted);">YOLO检测</small></div>
+            <div class="loop-node"><span class="dot">3</span><label>复核</label><small style="color:var(--muted);">专家确认</small></div>
+            <div class="loop-node"><span class="dot">4</span><label>再训练</label><small style="color:var(--muted);">增量更新</small></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ═══ Report Modal ═══ -->
+  <div class="modal" id="reportModal" role="dialog" aria-modal="true">
+    <div class="modal-card">
+      <h2>藻影卫士监测报告摘要</h2>
+      <p id="reportText"></p>
+      <p id="reportSuggestion" style="padding:8px 12px;background:rgba(25,118,210,.06);border-radius:6px;border:1px solid rgba(25,118,210,.15);"></p>
+      <button class="btn btn-primary" id="closeModal">关闭</button>
+    </div>
+  </div>
+
+  <!-- ═══ Scripts ═══ -->
+  <script src="js/detection.js"></script>
+  <script src="js/dashboard.js"></script>
+  <script src="js/app.js"></script>
+  <script src="js/dashboard-home.js"></script>
+</body>
+</html>

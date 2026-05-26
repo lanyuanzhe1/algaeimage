@@ -157,7 +157,15 @@
       "Bash(A:/Anaconda_envs/envs/ican/python /tmp/chk_ti.py)",
       "Bash(A:/Anaconda_envs/envs/ican/python /tmp/both.py)",
       "Bash(PYTHONIOENCODING=utf-8 A:/Anaconda_envs/envs/ican/python.exe evaluate_pipeline_no_rdn.py)",
-      "Bash(PYTHONIOENCODING=utf-8 A:/Anaconda_envs/envs/ican/python.exe evaluate_pipeline_struct_no_rdn.py)"
+      "Bash(PYTHONIOENCODING=utf-8 A:/Anaconda_envs/envs/ican/python.exe evaluate_pipeline_struct_no_rdn.py)",
+      "Bash(rm -f afterRDN/*.jpg)",
+      "Bash(PYTHONIOENCODING=utf-8 A:/Anaconda_envs/envs/ican/python.exe process_rdn.py)",
+      "Bash(PYTHONIOENCODING=utf-8 A:/Anaconda_envs/envs/ican/python.exe process_ienh.py)",
+      "Bash(PYTHONIOENCODING=utf-8 A:/Anaconda_envs/envs/ican/python.exe -c ' *)",
+      "Bash(rm -f afterYOLO/*.jpg)",
+      "Bash(cp -r e:/code/codex/code/algae_image_v1 e:/code/codex/code/algae_image_v2)",
+      "Bash(rm -rf e:/code/codex/code/algae_image_v2/__pycache__ e:/code/codex/code/algae_image_v2/*/__pycache__ e:/code/codex/code/algae_image_v2/*/*/__pycache__ e:/code/codex/code/algae_image_v2/.pytest_cache e:/code/codex/code/algae_image_v2/backend/data/results/*.png e:/code/codex/code/algae_image_v2/backend/data/history.db)",
+      "Bash(PYTHONIOENCODING=utf-8 A:/Anaconda_envs/envs/ican/python.exe -m uvicorn backend.app.main:app --host 0.0.0.0 --port 8000)"
     ],
     "deny": []
   },

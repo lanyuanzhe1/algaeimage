@@ -155,7 +155,9 @@
       "Bash(A:/Anaconda_envs/envs/ican/python /tmp/migrate.py)",
       "Bash(A:/Anaconda_envs/envs/ican/python /tmp/direct_scp.py)",
       "Bash(A:/Anaconda_envs/envs/ican/python /tmp/chk_ti.py)",
-      "Bash(A:/Anaconda_envs/envs/ican/python /tmp/both.py)"
+      "Bash(A:/Anaconda_envs/envs/ican/python /tmp/both.py)",
+      "Bash(PYTHONIOENCODING=utf-8 A:/Anaconda_envs/envs/ican/python.exe evaluate_pipeline_no_rdn.py)",
+      "Bash(PYTHONIOENCODING=utf-8 A:/Anaconda_envs/envs/ican/python.exe evaluate_pipeline_struct_no_rdn.py)"
     ],
     "deny": []
   },

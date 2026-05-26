@@ -1,14 +1,3 @@
 {
-  "tasks": [
-    {
-      "id": "fe28a062",
-      "cron": "17 */1 * * *",
-      "prompt": "监测 5060Ti (ssh -p 30769 root@xkh2l3rq6jm4cpuhunt.funhpc.com, 密码 wEoOG5Y791pBAT5CmRvyre2yI8Sgr1hv) 上两组 YOLO 训练。\n\nv1: /data/lifewatch_hsv/yolo_results/v8l_hsv_95/results.csv — baseline (v8l+amp+hsv_s=0+全量303k)\nv2: /data/lifewatch_hsv/yolo_results/v8l_hsv_stable/results.csv — stable (v8l+amp=false+hsv_s=0.7+半数86k)\n\n报告格式：\n```\n## 5060Ti 训练报告 {time}\n\n| 训练 | Ep | mAP50 | mAP50-95 | 趋势 | NaN | 状态 |\n|------|-----|-------|----------|------|-----|------|\n| v1 baseline | {ep} | {value} | {value} | UP/DOWN/FLAT | {count} | ALIVE/DEAD |\n| v2 stable | {ep} | {value} | {value} | UP/DOWN/FLAT | {count} | ALIVE/DEAD |\n\nGPU: {temp/mem/util}\nDisk: {usage}\n```\n\n趋势基于最近5个有效epoch (mAP50>0.01)。如果NaN增加、mAP暴跌或进程死亡，立即告警。",
-      "createdAt": 1779505433126,
-      "lastFiredAt": 1779674387621,
-      "recurring": true,
-      "createdBySessionId": "5b053040-32c6-4342-a0ad-8ac15ddff8e3",
-      "createdByPid": 580
-    }
-  ]
+  "tasks": []
 }

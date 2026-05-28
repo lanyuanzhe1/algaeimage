@@ -55,3 +55,8 @@ code/Polar_sim_0520/output/
 code/RDN_HSV_0526/data
 code/algae_image_v2/backend/data/
 code/picture/
+
+# PyInstaller build artifacts
+dist/
+build/
+*.spec

@@ -144,18 +144,26 @@ def detect(model: "YOLO",
 
 # ── Model switching (V2) ────────────────────────────────────────────────
 
+def _resolve_weights_root() -> str:
+    """Resolve project root for weight file lookup, compatible with PyInstaller."""
+    import sys
+    if getattr(sys, 'frozen', False):
+        return sys._MEIPASS
+    return os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+
 def load_yolo_by_key(model_key: str = DEFAULT_MODEL, device: str = "cpu") -> "YOLO":
     """Load YOLO model by key from AVAILABLE_MODELS config.
 
-    Resolves weights path relative to algae_image_v2/ root.
+    Resolves weights path relative to project root (compatible with PyInstaller).
     """
     if model_key not in AVAILABLE_MODELS:
         raise ValueError(
             f"Unknown model '{model_key}'. Available: {list(AVAILABLE_MODELS.keys())}"
         )
     cfg = AVAILABLE_MODELS[model_key]
-    base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    weights_path = os.path.join(base_dir, cfg["weights"])
+    root = _resolve_weights_root()
+    weights_path = os.path.join(root, cfg["weights"])
     return load_yolo(weights_path, device)
 
 

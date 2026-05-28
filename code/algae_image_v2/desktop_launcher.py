@@ -4,6 +4,16 @@ Starts uvicorn, opens the browser, and handles graceful shutdown.
 """
 import os
 import sys
+
+# In PyInstaller console=False mode, stdout/stderr are None because
+# the Windows GUI bootloader (runw.exe) does not attach a console.
+# uvicorn's ColourizedFormatter calls sys.stdout.isatty() and crashes
+# if stdout is None. Redirect to devnull so isatty() returns False.
+if sys.stdout is None:
+    sys.stdout = open(os.devnull, 'w')
+if sys.stderr is None:
+    sys.stderr = open(os.devnull, 'w')
+
 import threading
 import webbrowser
 
@@ -21,13 +31,6 @@ def main():
     host = "127.0.0.1"
     port = 8000
     url = f"http://{host}:{port}/app/"
-
-    print("=" * 50)
-    print("  Algae Image V2")
-    print("  FMPD Bright-field Algae Detection")
-    print(f"  {url}")
-    print("  Press Ctrl+C to exit")
-    print("=" * 50)
 
     threading.Thread(target=_open_browser, args=(url,), daemon=True).start()
 

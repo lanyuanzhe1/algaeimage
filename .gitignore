@@ -60,3 +60,4 @@ code/picture/
 dist/
 build/
 *.spec
+code/algae_image_v2/dist-release

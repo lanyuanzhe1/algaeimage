@@ -10,10 +10,12 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 | 目录 | 定位 |
 |------|------|
-| `code/algae_image_v1/` | **V1.0 产品** — 桌面工具，单机运行，当前开发焦点 |
+| `code/algae_image_v1/` | **V1.0 产品** — 桌面工具，单机运行，95类 LifeWatch |
+| `code/algae_image_v2/` | **V2.0 产品（当前主线）** — 5类 FMPD，HSV 偏振，已封装 exe |
 | `code/algae_guardian/` | 研究型项目 — 训练、评估、完整实验 |
 | `code/Polar_sim_0520/` | 结构张量管线实验 (mAP50 82.24%)，V1 产品的算法来源 |
 | `code/Polar_sim_0522/` | HSV 偏振实验 (mAP50 37.9%，已废弃)，含 Docker 训练环境 |
+| `code/RDN_HSV_0526/` | HSV+RDN 对照实验 — 证明 HSV 不需要 RDN，V2 跳过 RDN 的实验依据 |
 | `code/SPDRDN/` | RDN 网络原始研究 (独立 git 仓库)，含 MATLAB 评估脚本 |
 
 `docs/` 目录包含 13 份参考文档 (训练总结、交接文档、数据集调查等)。
@@ -39,10 +41,10 @@ python -m uvicorn backend.app.main:app --host 0.0.0.0 --port 8000
 
 访问: `http://localhost:8000/docs` (API), `http://localhost:8000/app/` (前端)
 
-### 处理管线 (不可变更顺序)
+### 处理管线 (不可变更顺序，V1专用)
 
 ```
-RGB原图 → 结构张量偏振模拟(I0/I45/I90/I135) → RDN偏振重建 → I_enh v2去散射增强 → YOLOv8s检测(95类)
+RGB原图 → 结构张量偏振模拟(I0/I45/I90/I135) → RDN偏振重建 → I_enh v2去散射增强 → YOLOv8s检测(95类LifeWatch)
 ```
 
 ### 架构
@@ -104,6 +106,67 @@ python -m pytest tests/test_frontend.py -v   # 前端HTML/JS结构 (2 test class
 ```
 
 `conftest.py` 提供会话级 RDN 和 YOLO 模型加载夹具。需要 torch/ultralytics 的测试仅在 conda ican 环境下通过。
+
+---
+
+## 一之补充、algae_image_v2 — V2.0 产品（当前主线）
+
+V2 面向 FMPD 5 类明场显微图像，管线更轻（跳过 RDN），已封装 Windows exe。
+
+### 启动
+
+```bash
+conda activate ican
+cd e:/code/codex/code/algae_image_v2
+python desktop_launcher.py          # 自动打开浏览器
+# 或: python -m uvicorn backend.app.main:app --host 0.0.0.0 --port 8000
+# 或: 双击 run.bat
+```
+
+访问: `http://localhost:8000/docs` (API), `http://localhost:8000/app/` (前端)
+
+### 处理管线（不可变更顺序）
+
+```
+RGB原图 → HSV偏振模拟 → I_enh v2增强 → YOLOv8l检测 → 风险预警(5类FMPD)
+```
+
+- **跳过 RDN**: V2 默认 `SKIP_RDN=True`（`core_engine/config.py`），HSV 确定性映射无需去噪
+- **5 类 FMPD**（非 95 类 LifeWatch）: Woronichinia / Spiroides / Dinobryon / Other-phytoplankton / Non-phytoplankton
+- **模型切换**: v8l（默认, mAP50 42.9%, 80/20 划分）/ v8s（mAP50 73.9% 虚高）
+
+### 架构
+
+与 V1 相同（frontend → backend → core_engine），差异:
+- `core_engine/polarization_sim.py` — HSV 色彩空间法（非结构张量），H→AoP, S→DoLP, V→S0
+- 无 `reconstructor.py`（无 RDN）
+- `core_engine/inference.py` — YOLOv8l 封装，`_resolve_weights_root()` 兼容 frozen 环境
+- `core_engine/config.py` — 5 类 FMPD 类名 + 风险映射 + `SKIP_RDN=True`
+
+### exe 打包（PyInstaller onedir）
+
+- **入口**: `desktop_launcher.py`（启动 uvicorn + 自动打开浏览器）
+- **构建**: `pyinstaller AlgaeImageV2.spec --clean --noconfirm`（`*.spec` 在 `.gitignore` 中排除）
+- **路径约定**: 所有文件系统路径必须用 `resource_path()`（定义在 `backend/app/config.py`），该函数在 `sys.frozen` 时回退到 `sys._MEIPASS`
+  - 三处实现: `backend/app/config.py`、`core_engine/inference.py`（`_resolve_weights_root()`）、`backend/app/main.py`
+- **stdout 修复**: `desktop_launcher.py` 在 import uvicorn 之前将 `None` stdout/stderr 重定向到 `os.devnull`（`console=False` 的 Windows GUI 模式要求）
+- **Chart.js**: 本地化到 `frontend/vendor/chart.umd.min.js`（离线要求）
+- **产物**: `dist-release/AlgaeImageV2/AlgaeImageV2.exe`
+
+### 模型权重
+
+- `code/algae_image_v2/weights/best_v8l.pt` — YOLOv8l FMPD 5类, mAP50 42.9% (~88MB)
+- `code/algae_image_v2/weights/best_v8s.pt` — YOLOv8s FMPD 5类, mAP50 73.9% (~22MB)
+- `code/algae_image_v2/weights/best.pt` — YOLOv8s 95类 LifeWatch (V1 兼容用)
+- `code/algae_image_v2/weights/rdn_polarization.pth` — RDN PSNR 62.46dB (V2 不使用)
+
+### 测试
+
+```bash
+cd e:/code/codex/code/algae_image_v2
+python -m pytest tests/test_pipeline.py -v   # 部分测试仍为V1遗留，3个失败 + 5个error为已知问题
+python -m pytest tests/test_frontend.py -v
+```
 
 ---
 

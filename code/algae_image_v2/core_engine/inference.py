@@ -145,11 +145,12 @@ def detect(model: "YOLO",
 # ── Model switching (V2) ────────────────────────────────────────────────
 
 def _resolve_weights_root() -> str:
-    """Resolve project root for weight file lookup, compatible with PyInstaller."""
-    import sys
-    if getattr(sys, 'frozen', False):
-        return sys._MEIPASS
-    return os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    """Resolve project root for weight file lookup, compatible with PyInstaller.
+
+    Delegates to backend.app.config.resource_path — single source of truth.
+    """
+    from backend.app.config import resource_path
+    return resource_path("")
 
 
 def load_yolo_by_key(model_key: str = DEFAULT_MODEL, device: str = "cpu") -> "YOLO":

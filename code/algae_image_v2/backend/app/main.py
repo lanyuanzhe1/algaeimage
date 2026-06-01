@@ -14,7 +14,7 @@ else:
 if _PROJECT_ROOT not in sys.path:
     sys.path.insert(0, _PROJECT_ROOT)
 
-from backend.app.config import DATA_DIR, HOST, PORT, RESULT_DIR, UPLOAD_DIR
+from backend.app.config import DATA_DIR, HOST, PORT, RESULT_DIR, UPLOAD_DIR, resource_path
 from backend.app.database import init_db
 
 pipeline_runner = None
@@ -56,24 +56,16 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-from backend.app.routes.detection import router as detect_router
-from backend.app.routes.dashboard import router as dashboard_router
-from backend.app.routes.history import router as history_router
+from backend.app.routes import router as api_router
 
-app.include_router(detect_router)
-app.include_router(dashboard_router)
-app.include_router(history_router)
+app.include_router(api_router)
 
 os.makedirs(RESULT_DIR, exist_ok=True)
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 app.mount("/static/results", StaticFiles(directory=RESULT_DIR), name="results")
 app.mount("/static/uploads", StaticFiles(directory=UPLOAD_DIR), name="uploads")
 
-if getattr(sys, 'frozen', False):
-    _FRONTEND = os.path.join(sys._MEIPASS, "frontend")
-else:
-    _FRONTEND = os.path.join(os.path.dirname(__file__), "..", "..", "frontend")
-FRONTEND_DIR = os.path.normpath(os.path.abspath(_FRONTEND))
+FRONTEND_DIR = resource_path("frontend")
 if not os.path.isdir(FRONTEND_DIR):
     raise RuntimeError(f"Frontend directory not found: {FRONTEND_DIR}")
 app.mount("/app", StaticFiles(directory=FRONTEND_DIR, html=True), name="frontend")

@@ -113,8 +113,11 @@ python -m pytest tests/test_frontend.py -v   # 前端HTML/JS结构 (2 test class
 
 V2 面向 FMPD 5 类明场显微图像，管线更轻（跳过 RDN），已封装 Windows exe。
 
+**2026-06-08 前端重构**: 原生 HTML/CSS/JS → Vue3 + Vite + Element Plus + ECharts（带管线可视化）。
+
 ### 启动
 
+Windows（需要 conda ican + GPU）:
 ```bash
 conda activate ican
 cd e:/code/codex/code/algae_image_v2
@@ -123,7 +126,13 @@ python desktop_launcher.py          # 自动打开浏览器
 # 或: 双击 run.bat
 ```
 
-访问: `http://localhost:8000/docs` (API), `http://localhost:8000/app/` (前端)
+macOS（仅前端开发 + API 测试，无需 conda ican）:
+```bash
+cd frontend && npm install && npm run dev    # Vite dev server (port 5173)
+python -m pytest tests/test_api.py -v        # API 测试不依赖 torch/cv2
+```
+
+访问: `http://localhost:8000/docs` (API), `http://localhost:8000/app/` (前端生产) 或 `http://localhost:5173/` (Vite dev)
 
 ### 处理管线（不可变更顺序）
 
@@ -132,25 +141,55 @@ RGB原图 → HSV偏振模拟 → I_enh v2增强 → YOLOv8l检测 → 风险预
 ```
 
 - **跳过 RDN**: V2 默认 `SKIP_RDN=True`（`core_engine/config.py`），HSV 确定性映射无需去噪
-- **5 类 FMPD**（非 95 类 LifeWatch）: Woronichinia / Spiroides / Dinobryon / Other-phytoplankton / Non-phytoplankton
+- **5 类 FMPD**: Woronichinia / Spiroides / Dinobryon / Other-phytoplankton / Non-phytoplankton
 - **模型切换**: v8l（默认, mAP50 42.9%, 80/20 划分）/ v8s（mAP50 73.9% 虚高）
 
 ### 架构
 
-与 V1 相同（frontend → backend → core_engine），差异:
-- `core_engine/polarization_sim.py` — HSV 色彩空间法（非结构张量），H→AoP, S→DoLP, V→S0
-- 无 `reconstructor.py`（无 RDN）
-- `core_engine/inference.py` — YOLOv8l 封装，`_resolve_weights_root()` 兼容 frozen 环境
-- `core_engine/config.py` — 5 类 FMPD 类名 + 风险映射 + `SKIP_RDN=True`
+```
+frontend/ (Vue3 + Vite + Element Plus + ECharts, npm build)
+    ↓ HTTP REST (JSON + base64 管线中间结果)
+backend/ (FastAPI 薄层: 路由 + 参数校验 + SQLite持久化)
+    ↓ import
+core_engine/ (纯Python库, 零框架依赖: numpy/PyTorch/cv2)
+```
+
+**前端技术栈**: Vue3 (Composition API) + Vite 6 + Element Plus 2.9 + ECharts 5.6 + Pinia + Vue Router 4 + Axios。
+Vite dev server 自动代理 `/api` 和 `/static` 到 `127.0.0.1:8000`。
+旧前端（原生 HTML/CSS/JS）移至 `frontend_legacy/`。
+
+**ECharts 注意**: ECharts 5.x 是树摇架构，必须在入口显式注册 CanvasRenderer + 图表类型 + 组件。
+当前 `src/main.js` 已注册 CanvasRenderer, PieChart, BarChart, Grid/Tooltip/Legend/Title。
+
+### 后端路由
+
+| 路由 | 说明 |
+|------|------|
+| `POST /api/v1/detect` | 单图检测 |
+| `POST /api/v1/detect/batch` | 批量检测 (最多50张) |
+| `POST /api/v1/detect/visualize` | **单图检测 + 5步管线可视化**（返回 base64 中间结果） |
+| `GET /api/v1/dashboard/stats` | 仪表板统计 |
+| `GET/ DELETE /api/v1/history` | 检测历史 CRUD |
+
+`/detect/visualize` 由 `PipelineRunner.run_with_visualization()` 驱动，返回 5 个 VizStep（RGB原图→偏振模拟→Stokes参数→I_enh增强→检测结果），每步含 base64 data URI 图像。
+对应 Pydantic schemas: `VizStep`, `VizDetectResponse`（`backend/app/schemas.py`）。
+
+### 前端页面
+
+| 路由 | 页面 | 说明 |
+|------|------|------|
+| `/` | 首页 | 管线概览 + 功能卡片 |
+| `/detect` | 检测工具 | 拖拽上传 + 5步管线可视化 + 结果表格 + ECharts 图表 |
+| `/history` | 历史记录 | 分页表格 |
+| `/dashboard` | 数据统计 | StatsCards + 饼图 + 柱状图 |
 
 ### exe 打包（PyInstaller onedir）
 
 - **入口**: `desktop_launcher.py`（启动 uvicorn + 自动打开浏览器）
 - **构建**: `pyinstaller AlgaeImageV2.spec --clean --noconfirm`（`*.spec` 在 `.gitignore` 中排除）
-- **路径约定**: 所有文件系统路径必须用 `resource_path()`（定义在 `backend/app/config.py`），该函数在 `sys.frozen` 时回退到 `sys._MEIPASS`
-  - 三处实现: `backend/app/config.py`、`core_engine/inference.py`（`_resolve_weights_root()`）、`backend/app/main.py`
-- **stdout 修复**: `desktop_launcher.py` 在 import uvicorn 之前将 `None` stdout/stderr 重定向到 `os.devnull`（`console=False` 的 Windows GUI 模式要求）
-- **Chart.js**: 本地化到 `frontend/vendor/chart.umd.min.js`（离线要求）
+- **路径约定**: 所有文件系统路径必须用 `resource_path()`（`backend/app/config.py`），frozen 时回退到 `sys._MEIPASS`
+- **stdout 修复**: `desktop_launcher.py` 将 None stdout/stderr 重定向到 `os.devnull`
+- **前端离线**: dist/ 构建产物纳入 git（force-add），打包 exe 时无需 Node.js
 - **产物**: `dist-release/AlgaeImageV2/AlgaeImageV2.exe`
 
 ### 模型权重
@@ -160,12 +199,19 @@ RGB原图 → HSV偏振模拟 → I_enh v2增强 → YOLOv8l检测 → 风险预
 - `code/algae_image_v2/weights/best.pt` — YOLOv8s 95类 LifeWatch (V1 兼容用)
 - `code/algae_image_v2/weights/rdn_polarization.pth` — RDN PSNR 62.46dB (V2 不使用)
 
-### 测试
+### 测试（分层）
+
+| 测试文件 | 环境要求 | 说明 |
+|----------|----------|------|
+| `tests/test_api.py` | **无**（macOS 可运行） | 7 个 API 测试，FastAPI TestClient + mock pipeline |
+| `tests/test_pipeline.py` | conda ican + torch/cv2 | 核心引擎集成测试 |
+| `tests/test_frontend.py` | conda ican | 前端 HTML/JS 结构测试（针对旧前端） |
 
 ```bash
-cd e:/code/codex/code/algae_image_v2
-python -m pytest tests/test_pipeline.py -v   # 部分测试仍为V1遗留，3个失败 + 5个error为已知问题
-python -m pytest tests/test_frontend.py -v
+python -m pytest tests/test_api.py -v              # macOS/Windows 均可
+python -m pytest tests/test_api.py -v -k "200"     # 单个测试筛选
+cd frontend && npm run dev                          # 前端热重载开发
+cd frontend && npm run build                        # 生产构建 → dist/
 ```
 
 ---

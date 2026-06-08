@@ -1,5 +1,5 @@
 ---
-paths: code/algae_image_v1/backend/**
+paths: code/algae_image_v1/backend/**;code/algae_image_v2/backend/**
 ---
 
 # Backend Rules

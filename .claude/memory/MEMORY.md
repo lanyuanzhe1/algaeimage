@@ -1,0 +1,2 @@
+- [Vue3 over Streamlit decision](vue3-over-streamlit-decision.md) — why Vue3 was chosen for the competition platform
+- [Legacy frontend XSS known](legacy-frontend-xss-known.md) — frontend_legacy/ XSS intentionally unfixed, replaced by Vue3

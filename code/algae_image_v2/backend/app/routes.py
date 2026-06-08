@@ -25,6 +25,8 @@ from .schemas import (
     HistoryListResponse,
     SingleDetectResponse,
     StatsResponse,
+    VizStep,
+    VizDetectResponse,
 )
 
 router = APIRouter(prefix="/api/v1", tags=["api"])
@@ -206,6 +208,64 @@ async def detect_batch(
             avg_q_score=round(avg_q, 4),
         ),
     )
+
+
+@router.post("/detect/visualize", response_model=VizDetectResponse)
+async def detect_visualize(
+    file: UploadFile = File(...),
+    pipeline=Depends(get_pipeline),
+    db: aiosqlite.Connection = Depends(get_db),
+):
+    """Upload a single micrograph and run detection WITH intermediate pipeline visualization."""
+    if not file.content_type or not file.content_type.startswith("image/"):
+        raise HTTPException(status_code=400, detail="File must be an image (PNG, JPG, TIF, BMP)")
+
+    file_id, filepath = await _save_upload(file)
+
+    try:
+        result = pipeline.run_with_visualization(filepath)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Pipeline error: {e}")
+
+    det_items = _to_detection_items(result["detections"])
+    risk = _overall_risk(result["detections"])
+
+    # Decode last step's base64 image back to ndarray for saving
+    import base64 as b64
+    last_img_b64 = result["steps"][-1]["image"]
+    b64_data = last_img_b64.split(",", 1)[1] if "," in last_img_b64 else last_img_b64
+    img_bytes = b64.b64decode(b64_data)
+    img_arr = np.frombuffer(img_bytes, np.uint8)
+    result_rgb = cv2.cvtColor(cv2.imdecode(img_arr, cv2.IMREAD_COLOR), cv2.COLOR_BGR2RGB)
+    result_url = await _save_result(file_id, result_rgb)
+
+    await db.execute(
+        """INSERT INTO detection_history
+               (id, filename, image_path, result_path, detections, q_score, risk_level)
+           VALUES (?, ?, ?, ?, ?, ?, ?)""",
+        (
+            file_id,
+            file.filename or "unknown",
+            filepath,
+            result_url,
+            json.dumps([d.model_dump() for d in det_items]),
+            round(result["q_score"], 4),
+            risk,
+        ),
+    )
+    await db.commit()
+
+    return VizDetectResponse(
+        id=file_id,
+        filename=file.filename or "unknown",
+        steps=[VizStep(**s) for s in result["steps"]],
+        detections=det_items,
+        q_score=round(result["q_score"], 4),
+        risk_level=risk,
+        processing_time_ms=round(result["processing_time_ms"], 1),
+    )
+
+
 
 
 # ═══════════════════════════════════════════════════════════════════════════════

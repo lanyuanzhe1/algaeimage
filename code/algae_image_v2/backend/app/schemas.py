@@ -71,3 +71,21 @@ class HistoryListResponse(BaseModel):
     total: int
     page: int
     limit: int
+
+
+class VizStep(BaseModel):
+    """One intermediate pipeline step with base64 image."""
+    title: str
+    image: str              # data:image/png;base64,...
+    description: str
+
+
+class VizDetectResponse(BaseModel):
+    """Response for POST /api/v1/detect/visualize — includes all pipeline steps."""
+    id: str
+    filename: str
+    steps: list[VizStep]
+    detections: list[DetectionItem]
+    q_score: float
+    risk_level: Optional[str] = None
+    processing_time_ms: float

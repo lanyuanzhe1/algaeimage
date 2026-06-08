@@ -66,8 +66,12 @@ app.mount("/static/results", StaticFiles(directory=RESULT_DIR), name="results")
 app.mount("/static/uploads", StaticFiles(directory=UPLOAD_DIR), name="uploads")
 
 FRONTEND_DIR = resource_path("frontend")
+# In dev mode, serve the Vite build output (frontend/dist)
+_dist = os.path.join(FRONTEND_DIR, "dist")
+if os.path.isdir(_dist):
+    FRONTEND_DIR = _dist
 if not os.path.isdir(FRONTEND_DIR):
-    raise RuntimeError(f"Frontend directory not found: {FRONTEND_DIR}")
+    raise RuntimeError(f"Frontend directory not found: {FRONTEND_DIR} (build with: cd frontend && npm run build)")
 app.mount("/app", StaticFiles(directory=FRONTEND_DIR, html=True), name="frontend")
 
 

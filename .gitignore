@@ -21,6 +21,11 @@ session-log.txt
 *.log
 ~$*
 
+# Cache directories
+.ruff_cache/
+.pytest_cache/
+skills-lock.json
+
 # System files
 .DS_Store
 Thumbs.db
@@ -65,5 +70,4 @@ node_modules/
 .playwright-mcp/
 .claude/settings.json
 .claude/settings.local.json
-code/algae_image_v2/backend/data/
-.playwright-mcp/
+

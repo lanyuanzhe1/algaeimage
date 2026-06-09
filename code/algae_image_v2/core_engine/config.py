@@ -1,4 +1,11 @@
-"""FMPD 5-class algae detection — species, risk, model, and pipeline config."""
+"""算法配置 — 藻种分类、风险映射、模型选择和管线参数。
+
+职责边界:
+  · 此文件 = 算法/业务（类名映射, 风险等级, 模型元数据, I_enh 参数, 阈值）
+  · backend/app/config.py = 部署/路径（resource_path, HOST, PORT, 目录结构）
+
+注意: 路径常量不在这里定义；算法参数不放在 backend/app/config.py。
+"""
 from typing import Dict, Tuple
 
 # ── FMPD 5 Class Mapping ──────────────────────────────────────────

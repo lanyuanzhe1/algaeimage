@@ -1,4 +1,11 @@
-"""Application configuration constants."""
+"""应用配置 — 部署环境与路径常量。
+
+职责边界:
+  · 此文件 = 部署/路径/目录结构（resource_path, HOST, PORT, 目录, DB）
+  · core_engine/config.py = 算法/业务（类名, 风险矩阵, 模型元数据, I_enh 参数）
+
+注意: 算法参数不在这里定义；路径常量不放在 core_engine。
+"""
 import os
 import sys
 

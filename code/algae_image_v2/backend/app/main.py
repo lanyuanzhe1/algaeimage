@@ -56,9 +56,11 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-from backend.app.routes import router as api_router
+from backend.app.routes import router as detect_router
+from backend.app.routes_data import router as data_router
 
-app.include_router(api_router)
+app.include_router(detect_router)
+app.include_router(data_router)
 
 os.makedirs(RESULT_DIR, exist_ok=True)
 os.makedirs(UPLOAD_DIR, exist_ok=True)

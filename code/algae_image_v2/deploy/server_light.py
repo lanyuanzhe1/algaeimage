@@ -26,7 +26,23 @@ import aiofiles
 import aiosqlite
 import logging
 from PIL import Image
-from pydantic import BaseModel
+# 确保能找到 shared/ 模块（部署时与 server_light.py 同级）
+_srv_dir = os.path.dirname(os.path.abspath(__file__))
+if _srv_dir not in sys.path:
+    sys.path.insert(0, _srv_dir)
+
+from shared.schemas import (  # noqa: E402
+    BatchDetectResponse,
+    BatchResult,
+    BatchSummary,
+    DetectionItem,
+    HistoryItem,
+    HistoryListResponse,
+    SingleDetectResponse,
+    StatsResponse,
+    VizDetectResponse,
+    VizStep,
+)
 
 # ── 配置 ───────────────────────────────────────────────────
 HOST = "0.0.0.0"
@@ -36,76 +52,6 @@ DATA_DIR = os.path.join(BASE_DIR, "data")
 UPLOAD_DIR = os.path.join(DATA_DIR, "uploads")
 RESULT_DIR = os.path.join(DATA_DIR, "results")
 DB_PATH = os.path.join(DATA_DIR, "history.db")
-
-# ── Pydantic Schemas ──────────────────────────────────────
-
-class DetectionItem(BaseModel):
-    class_id: int
-    class_name: str
-    class_name_zh: str
-    confidence: float
-    bbox: list[float]
-    risk_level: str
-
-class SingleDetectResponse(BaseModel):
-    id: str
-    filename: str
-    detections: list[DetectionItem]
-    q_score: float
-    risk_level: Optional[str] = None
-    result_image_url: str
-    processing_time_ms: float
-
-class BatchResult(BaseModel):
-    filename: str
-    detections: list[DetectionItem]
-    status: str
-    error: Optional[str] = None
-
-class BatchSummary(BaseModel):
-    total_detections: int
-    high_risk_count: int
-    avg_q_score: float
-
-class BatchDetectResponse(BaseModel):
-    batch_id: str
-    total: int
-    results: list[BatchResult]
-    summary: BatchSummary
-
-class StatsResponse(BaseModel):
-    total_detections: int
-    today_count: int
-    class_distribution: dict[str, int]
-    risk_distribution: dict[str, int]
-    recent_detections: list[dict]
-
-class HistoryItem(BaseModel):
-    id: str
-    filename: str
-    risk_level: Optional[str]
-    q_score: Optional[float]
-    created_at: str
-
-class HistoryListResponse(BaseModel):
-    items: list[HistoryItem]
-    total: int
-    page: int
-    limit: int
-
-class VizStep(BaseModel):
-    title: str
-    image: str
-    description: str
-
-class VizDetectResponse(BaseModel):
-    id: str
-    filename: str
-    steps: list[VizStep]
-    detections: list[DetectionItem]
-    q_score: float
-    risk_level: Optional[str] = None
-    processing_time_ms: float
 
 # ── 模拟数据 ──────────────────────────────────────────────
 

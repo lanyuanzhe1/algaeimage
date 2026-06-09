@@ -24,7 +24,8 @@ KEY_PATH = os.path.expanduser("~/.ssh/id_ed25519_aliyun")
 def connect():
     """建立 SSH 连接（使用密钥）"""
     client = paramiko.SSHClient()
-    client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+    client.load_system_host_keys()
+    client.set_missing_host_key_policy(paramiko.RejectPolicy())
     try:
         # 优先从 ~/.ssh/config 读取
         ssh_config = paramiko.SSHConfig()

@@ -21,6 +21,8 @@
         <el-menu-item index="/detect">检测工具</el-menu-item>
         <el-menu-item index="/history">历史记录</el-menu-item>
         <el-menu-item index="/dashboard">数据统计</el-menu-item>
+        <el-menu-item index="/devices">设备管理</el-menu-item>
+        <el-menu-item index="/review">人工复核</el-menu-item>
       </el-menu>
       <router-view />
     </el-main>

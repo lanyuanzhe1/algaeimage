@@ -24,6 +24,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import Response
 import aiofiles
 import aiosqlite
+import logging
 from PIL import Image
 from pydantic import BaseModel
 
@@ -238,6 +239,15 @@ def _minimal_png() -> bytes:
     return buf.getvalue()
 
 
+_ALLOWED_EXTENSIONS = {".png", ".jpg", ".jpeg", ".tif", ".tiff", ".bmp", ".gif", ".webp"}
+
+
+def _safe_ext(filename: str) -> str:
+    """返回安全的后缀名，不在白名单内的回退为 .png。"""
+    ext = os.path.splitext(filename or "image.png")[1].lower()
+    return ext if ext in _ALLOWED_EXTENSIONS else ".png"
+
+
 @router.post("/preview")
 async def preview_image(file: UploadFile = File(...)):
     """上传图片转换为 PNG 供浏览器预览（使用 Pillow，无需 OpenCV）。"""
@@ -257,7 +267,7 @@ async def detect_single(file: UploadFile = File(...)):
     """单张图片检测（返回模拟数据）。"""
     # 保存上传文件
     file_id = uuid.uuid4().hex
-    ext = os.path.splitext(file.filename or "image.png")[1] or ".png"
+    ext = _safe_ext(file.filename or "image.png")
     safe_name = f"{file_id}{ext}"
     filepath = os.path.join(UPLOAD_DIR, safe_name)
     async with aiofiles.open(filepath, "wb") as f:
@@ -319,7 +329,7 @@ async def detect_batch(files: list[UploadFile] = File(...)):
     for f in files:
         try:
             file_id = uuid.uuid4().hex
-            ext = os.path.splitext(f.filename or "img.png")[1] or ".png"
+            ext = _safe_ext(f.filename or "img.png")
             filepath = os.path.join(UPLOAD_DIR, f"{file_id}{ext}")
             async with aiofiles.open(filepath, "wb") as fh:
                 await fh.write(await f.read())
@@ -337,11 +347,12 @@ async def detect_batch(files: list[UploadFile] = File(...)):
                 status="ok",
             ))
         except Exception as e:
+            logging.warning("批量检测处理失败: %s — %s", f.filename, e)
             results.append(BatchResult(
                 filename=f.filename or "unknown",
                 detections=[],
                 status="error",
-                error=str(e),
+                error="处理失败",
             ))
 
     avg_q = sum(q_scores) / len(q_scores) if q_scores else 0.0
@@ -361,7 +372,7 @@ async def detect_batch(files: list[UploadFile] = File(...)):
 async def detect_visualize(file: UploadFile = File(...)):
     """单张检测 + 5 步管线可视化（模拟数据）。"""
     file_id = uuid.uuid4().hex
-    ext = os.path.splitext(file.filename or "image.png")[1] or ".png"
+    ext = _safe_ext(file.filename or "image.png")
     filepath = os.path.join(UPLOAD_DIR, f"{file_id}{ext}")
     async with aiofiles.open(filepath, "wb") as f:
         await f.write(await file.read())

@@ -8,3 +8,4 @@
 - [保留所有权重](feedback_keep_weights.md) — 失败实验的 .pt/.pth 也有价值，只清理构建产物
 - [Vue3选型决策](vue3-over-streamlit-decision.md) — 竞赛平台选 Vue3 而非 Streamlit 的原因
 - [旧前端XSS](legacy-frontend-xss-known.md) — frontend_legacy/ XSS已知不修，已被Vue3替代
+- [样机演示架构](demo_workflow_architecture.md) — SDK直连、stream_state缓冲、前端轮询、已知bug

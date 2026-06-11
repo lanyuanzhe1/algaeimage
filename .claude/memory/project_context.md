@@ -25,7 +25,9 @@ metadata:
 - V2 exe 封装已完成（PyInstaller onedir，dist-release/）
 - Vue3 前端已迁移并丰富化（6 页面 SPA）
 - 阿里云 ECS 部署完成：前端 nginx + 后端 FastAPI systemd
+- **样机演示流程贯通**: 海康 MV-CA013-20GC SDK 直连 → 实时检测 → 前端轮询（5fps 采集, 2s 刷新）
 - 架构改进：shared schemas、拆分路由、config 边界明确
+- **当前阶段: 样机演示**，后续 Docker 封装迁移
 - 后续瓶颈：采集更多数据扩充 FMPD（当前仅293张）
 
 ## 环境

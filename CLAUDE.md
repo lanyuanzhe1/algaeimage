@@ -111,9 +111,10 @@ python -m pytest tests/test_frontend.py -v   # 前端HTML/JS结构 (2 test class
 
 ## 一之补充、algae_image_v2 — V2.0 产品（当前主线）
 
-V2 面向 FMPD 5 类明场显微图像，管线更轻（跳过 RDN），已封装 Windows exe。
+V2 面向 FMPD 5 类明场显微图像，管线更轻（跳过 RDN），已封装 Windows exe。**当前阶段: 样机演示**（相机直连 + 实时检测 + 前端轮询）。
 
 **2026-06-08 前端重构**: 原生 HTML/CSS/JS → Vue3 + Vite + Element Plus + ECharts（带管线可视化）。
+**2026-06-11 样机演示**: 海康 MV-CA013-20GC SDK 直连、实时采集→检测→前端轮询全链路贯通。
 
 ### 启动
 
@@ -168,6 +169,8 @@ Vite dev server 自动代理 `/api` 和 `/static` 到 `127.0.0.1:8000`。
 | `POST /api/v1/detect` | 单图检测 |
 | `POST /api/v1/detect/batch` | 批量检测 (最多50张) |
 | `POST /api/v1/detect/visualize` | **单图检测 + 5步管线可视化**（返回 base64 中间结果） |
+| `GET /api/v1/detect/latest?n=10` | **实时轮询** — 最近 N 条检测结果（无 base64） |
+| `GET /api/v1/detect/stream-status` | **采集状态** — active/fps/帧数/运行时间 |
 | `GET /api/v1/dashboard/stats` | 仪表板统计 |
 | `GET/ DELETE /api/v1/history` | 检测历史 CRUD |
 
@@ -198,6 +201,62 @@ Vite dev server 自动代理 `/api` 和 `/static` 到 `127.0.0.1:8000`。
 - `code/algae_image_v2/weights/best_v8s.pt` — YOLOv8s FMPD 5类, mAP50 73.9% (~22MB)
 - `code/algae_image_v2/weights/best.pt` — YOLOv8s 95类 LifeWatch (V1 兼容用)
 - `code/algae_image_v2/weights/rdn_polarization.pth` — RDN PSNR 62.46dB (V2 不使用)
+
+### 样机演示流程（2026-06-12 新增）
+
+相机直连 + 实时检测 + 前端轮询，全链路贯通。
+
+**启动（3 步）**:
+```bash
+# 1. 启动后端
+cd e:/code/codex/code/algae_image_v2
+python -m uvicorn backend.app.main:app --host 0.0.0.0 --port 8000
+
+# 2. 启动相机采集（5fps）
+python camera_grabber.py --fps 5
+
+# 3.  打开浏览器 → http://localhost:8000/app/detect → 点击导航栏"实时监测"
+```
+
+**架构**:
+```
+相机 SDK callback → numpy RGB → JPEG → POST /api/v1/detect/visualize
+→ core_engine 管线 → stream_state.add_result()
+→ GET /api/v1/detect/latest (2s 轮询) → Vue3 前端自动刷新
+```
+
+**数据流三组件**:
+| 组件 | 文件 | 说明 |
+|------|------|------|
+| SDK 采集器 | `camera_grabber.py` | ctypes 回调→numpy→HTTP POST，节流 5fps |
+| AVI 回放 | `video_grabber.py` | cv2 读 AVI 模拟相机，无硬件测试用 |
+| 内存缓冲 | `backend/app/services/stream_state.py` | 线程安全，`threading.Lock` 保护，最近 200 条 |
+
+**新增后端端点**:
+| 路由 | 说明 |
+|------|------|
+| `GET /api/v1/detect/latest?n=10` | 最近 N 条检测结果（轻量，无 base64） |
+| `GET /api/v1/detect/stream-status` | 采集状态（active, total_frames, effective_fps） |
+
+**前端实时监测**: 导航栏 `el-switch` → Pinia store (`useDetectStore`) → `setInterval` 2s 轮询。全局状态跨组件共享（App.vue + DetectPage.vue）。
+
+### 相机 SDK（海康 MV-CA013-20GC）
+
+- **型号**: MV-CA013-20GC, GigE 1.3MP 彩色
+- **SDK**: Python ctypes 封装，`A:\Program Files\MVS\Development\Samples\Python\MvImport`
+- **DLL**: `C:\Program Files (x86)\Common Files\MVS\Runtime\Win64_x64\MvCameraControl.dll`
+- **关键**: `import` SDK 之前必须 `os.environ["PATH"]` 加入 DLL 目录（`WinDLL` 模块级加载早于 `os.add_dll_directory`）
+- **独占**: SDK 与 MVS 客户端不能同时访问相机（`OpenDevice` 错误码 `0x80000203`）
+- **枚举**: `MV_CC_EnumDevices` → 169.254.82.254（直连 GigE，无 DHCP 时的 link-local 地址）
+
+### 已知坑点
+
+- **实时监测不刷新**: `v-model` + `@change="toggleLiveMode"` 双重触发 → 开关来回翻。修复: 去 `@change`，用 `watch(liveMode)` 替代
+- **端口残留**: `taskkill` 后端口可能被 `TIME_WAIT` 占用 120s。换端口或用 `SO_REUSEADDR`
+- **history.db 文件锁**: Windows 下 uvicorn 异常退出后文件可能被系统进程锁死。若无法删除，改名绕过
+- **SPA fallback**: FastAPI `StaticFiles(html=True)` 不支持子路径。需显式 `@app.get("/app/{full_path:path}")`
+- **npm 不在 bash PATH**: 前端构建需通过 Python `subprocess` 调用，并在 env 中设 `PATH=A:\Program Files\nodejs`
+- **前端构建产物 (dist/) 在 .gitignore 中**: 如需更新生产部署的静态文件，force-add: `git add -f dist/`
 
 ### 测试（分层）
 

@@ -10,20 +10,33 @@
       </div>
     </el-header>
     <el-main>
-      <el-menu
-        :default-active="currentRoute"
-        mode="horizontal"
-        :ellipsis="false"
-        @select="handleSelect"
-        class="nav-menu"
-      >
-        <el-menu-item index="/">首页</el-menu-item>
-        <el-menu-item index="/detect">检测工具</el-menu-item>
-        <el-menu-item index="/history">历史记录</el-menu-item>
-        <el-menu-item index="/dashboard">数据统计</el-menu-item>
-        <el-menu-item index="/devices">设备管理</el-menu-item>
-        <el-menu-item index="/review">人工复核</el-menu-item>
-      </el-menu>
+      <div class="nav-bar">
+        <el-menu
+          :default-active="currentRoute"
+          mode="horizontal"
+          :ellipsis="false"
+          @select="handleSelect"
+          class="nav-menu"
+        >
+          <el-menu-item index="/">首页</el-menu-item>
+          <el-menu-item index="/detect">检测工具</el-menu-item>
+          <el-menu-item index="/history">历史记录</el-menu-item>
+          <el-menu-item index="/dashboard">数据统计</el-menu-item>
+          <el-menu-item index="/devices">设备管理</el-menu-item>
+          <el-menu-item index="/review">人工复核</el-menu-item>
+        </el-menu>
+        <div class="live-toggle">
+          <el-switch
+            v-model="store.liveMode"
+            @change="store.toggleLiveMode"
+            active-text="实时监测"
+            size="large"
+          />
+          <span v-if="store.liveMode" class="live-badge">
+            {{ store.streamStatus.total_frames }}帧 {{ store.streamStatus.effective_fps?.toFixed(1) }}fps
+          </span>
+        </div>
+      </div>
       <router-view />
     </el-main>
   </el-container>
@@ -32,9 +45,11 @@
 <script setup>
 import { computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
+import { useDetectStore } from '@/stores/detect'
 
 const router = useRouter()
 const route = useRoute()
+const store = useDetectStore()
 
 const currentRoute = computed(() => route.path)
 
@@ -71,11 +86,30 @@ body { font-family: 'Microsoft YaHei', 'PingFang SC', sans-serif; background: #f
 }
 .brand h1 { font-size: 20px; font-weight: 600; color: white; }
 .subtitle { font-size: 12px; opacity: 0.75; margin-top: 2px; }
-.nav-menu {
+.nav-bar {
+  display: flex;
+  align-items: center;
   margin: -20px -20px 20px -20px;
   padding: 0 20px;
   background: white;
   border-bottom: 1px solid #e8e8e8;
+}
+.nav-menu {
+  flex: 1;
+  border-bottom: none !important;
+}
+.live-toggle {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding-left: 16px;
+  border-left: 1px solid #e8e8e8;
+  white-space: nowrap;
+}
+.live-badge {
+  font-size: 12px;
+  color: #67c23a;
+  font-weight: 500;
 }
 .app-container { min-height: 100vh; }
 </style>

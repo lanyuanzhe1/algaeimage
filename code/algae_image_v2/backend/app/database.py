@@ -20,7 +20,7 @@ async def init_db():
                 detections TEXT NOT NULL,
                 q_score REAL,
                 risk_level TEXT,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                created_at TEXT DEFAULT (datetime('now','localtime'))
             )
         """)
         await db.execute("""
@@ -29,7 +29,7 @@ async def init_db():
                 total INTEGER NOT NULL,
                 completed INTEGER DEFAULT 0,
                 status TEXT DEFAULT 'processing',
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                created_at TEXT DEFAULT (datetime('now','localtime'))
             )
         """)
         await db.commit()

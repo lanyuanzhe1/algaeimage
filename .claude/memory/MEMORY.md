@@ -1,2 +1,10 @@
-- [Vue3 over Streamlit decision](vue3-over-streamlit-decision.md) — why Vue3 was chosen for the competition platform
-- [Legacy frontend XSS known](legacy-frontend-xss-known.md) — frontend_legacy/ XSS intentionally unfixed, replaced by Vue3
+- [项目背景](project_context.md) — 藻影卫士项目，当前主线 algae_image_v2，HSV 分支，已全部 git 提交
+- [用户画像](user_profile.md) — 角色、技术背景、环境、沟通偏好
+- [工作流偏好](feedback_workflow.md) — 验证后完成、一个PR、无emoji、无结尾总结
+- [交互风格](feedback_interaction.md) — 并行优先、bash直接命令、主动解释原理
+- [YOLO检测设计](yolo_detection_notes.md) — 95类LifeWatch体系，84.7% mAP50，形状结构为主
+- [外部资源](reference_external.md) — GitHub、云服务器、阿里云ECS、竞赛文书、模型权重
+- [Docx转换工作流](feedback_docx_workflow.md) — pandoc+OOXML 处理含公式文档，优先于 docx-js
+- [保留所有权重](feedback_keep_weights.md) — 失败实验的 .pt/.pth 也有价值，只清理构建产物
+- [Vue3选型决策](vue3-over-streamlit-decision.md) — 竞赛平台选 Vue3 而非 Streamlit 的原因
+- [旧前端XSS](legacy-frontend-xss-known.md) — frontend_legacy/ XSS已知不修，已被Vue3替代

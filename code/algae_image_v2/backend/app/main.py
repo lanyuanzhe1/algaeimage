@@ -74,7 +74,26 @@ if os.path.isdir(_dist):
     FRONTEND_DIR = _dist
 if not os.path.isdir(FRONTEND_DIR):
     raise RuntimeError(f"Frontend directory not found: {FRONTEND_DIR} (build with: cd frontend && npm run build)")
-app.mount("/app", StaticFiles(directory=FRONTEND_DIR, html=True), name="frontend")
+# Serve frontend: assets at /assets, SPA fallback at /app/*
+_assets_dir = os.path.join(FRONTEND_DIR, "assets")
+if os.path.isdir(_assets_dir):
+    app.mount("/assets", StaticFiles(directory=_assets_dir), name="assets")
+
+from fastapi.responses import FileResponse
+_index_html = os.path.join(FRONTEND_DIR, "index.html")
+@app.get("/app/{full_path:path}")
+async def app_spa_fallback(full_path: str):
+    """SPA fallback: serve index.html for any client-side route."""
+    if os.path.isfile(_index_html):
+        return FileResponse(_index_html)
+    return {"detail": "Not Found"}
+
+@app.get("/app")
+async def app_root():
+    """Serve index.html at /app root."""
+    if os.path.isfile(_index_html):
+        return FileResponse(_index_html)
+    return {"detail": "Not Found"}
 
 
 if __name__ == "__main__":

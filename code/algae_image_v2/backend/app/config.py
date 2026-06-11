@@ -33,7 +33,7 @@ YOLO_WEIGHTS_V8S = resource_path("weights/best_v8s.pt")
 DATA_DIR = resource_path("backend/data")
 UPLOAD_DIR = os.path.join(DATA_DIR, "uploads")
 RESULT_DIR = os.path.join(DATA_DIR, "results")
-DB_PATH = os.path.join(DATA_DIR, "detection_history.db")
+DB_PATH = os.path.join(DATA_DIR, "history.db")
 
 API_PREFIX = "/api/v1"
 HOST = "0.0.0.0"

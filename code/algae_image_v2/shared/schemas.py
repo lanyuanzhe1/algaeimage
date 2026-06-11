@@ -94,3 +94,28 @@ class VizDetectResponse(BaseModel):
     q_score: float
     risk_level: Optional[str] = None
     processing_time_ms: float
+
+
+class LatestResult(BaseModel):
+    """/detect/latest 返回的单条摘要 (不含 base64 图片，保持轻量)"""
+    id: str
+    filename: str
+    detections: list[DetectionItem]
+    q_score: float
+    risk_level: Optional[str] = None
+    processing_time_ms: float
+
+
+class LatestResultsResponse(BaseModel):
+    """GET /api/v1/detect/latest 响应"""
+    results: list[LatestResult]
+    count: int
+
+
+class StreamStatusResponse(BaseModel):
+    """GET /api/v1/detect/stream-status 响应"""
+    active: bool
+    total_frames: int
+    buffer_size: int
+    elapsed_seconds: float
+    effective_fps: float

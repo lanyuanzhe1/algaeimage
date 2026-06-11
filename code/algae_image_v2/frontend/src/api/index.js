@@ -41,4 +41,16 @@ export function deleteHistory(id) {
   return api.delete(`/history/${id}`)
 }
 
+// ─── Live Stream ──────────────────────────────────────────────
+
+/** Get the N most recent detection results */
+export function getLatestResults(n = 10) {
+  return api.get('/detect/latest', { params: { n } })
+}
+
+/** Get live stream status (fps, frame count, uptime) */
+export function getStreamStatus() {
+  return api.get('/detect/stream-status')
+}
+
 export default api

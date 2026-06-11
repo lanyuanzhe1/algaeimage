@@ -16,13 +16,17 @@ import numpy as np
 
 from .config import UPLOAD_DIR, RESULT_DIR
 from .database import get_db
+from .services.stream_state import stream_state
 from .schemas import (
     BatchDetectResponse,
     BatchResult,
     BatchSummary,
     DetectionItem,
+    LatestResult,
+    LatestResultsResponse,
     SingleDetectResponse,
     StatsResponse,
+    StreamStatusResponse,
     VizStep,
     VizDetectResponse,
 )
@@ -142,6 +146,16 @@ async def detect_single(
     )
     await db.commit()
 
+    # Push to live stream buffer (before returning)
+    stream_state.add_result({
+        "id": file_id,
+        "filename": file.filename or "unknown",
+        "detections": [d.model_dump() for d in det_items],
+        "q_score": round(result["q_score"], 4),
+        "risk_level": risk,
+        "processing_time_ms": result["processing_time_ms"],
+    })
+
     return SingleDetectResponse(
         id=file_id,
         filename=file.filename or "unknown",
@@ -253,6 +267,16 @@ async def detect_visualize(
     )
     await db.commit()
 
+    # Push to live stream buffer (before returning)
+    stream_state.add_result({
+        "id": file_id,
+        "filename": file.filename or "unknown",
+        "detections": [d.model_dump() for d in det_items],
+        "q_score": round(result["q_score"], 4),
+        "risk_level": risk,
+        "processing_time_ms": result["processing_time_ms"],
+    })
+
     return VizDetectResponse(
         id=file_id,
         filename=file.filename or "unknown",
@@ -262,4 +286,32 @@ async def detect_visualize(
         risk_level=risk,
         processing_time_ms=round(result["processing_time_ms"], 1),
     )
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# Live stream polling endpoints
+# ═══════════════════════════════════════════════════════════════════════════════
+
+@router.get("/detect/latest", response_model=LatestResultsResponse)
+async def get_latest_results(n: int = Query(default=10, ge=1, le=50)):
+    """Return the N most recent detection results (for frontend polling)."""
+    raw = stream_state.get_latest(n)
+    results = [
+        LatestResult(
+            id=r["id"],
+            filename=r["filename"],
+            detections=[DetectionItem(**d) for d in r["detections"]],
+            q_score=r["q_score"],
+            risk_level=r["risk_level"],
+            processing_time_ms=r["processing_time_ms"],
+        )
+        for r in raw
+    ]
+    return LatestResultsResponse(results=results, count=len(results))
+
+
+@router.get("/detect/stream-status", response_model=StreamStatusResponse)
+async def get_stream_status():
+    """Return live stream status (fps, frame count, uptime)."""
+    return StreamStatusResponse(**stream_state.get_status())
 

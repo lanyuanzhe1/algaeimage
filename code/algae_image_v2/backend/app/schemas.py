@@ -18,8 +18,11 @@ from shared.schemas import (  # noqa: F401, E402
     DetectionItem,
     HistoryItem,
     HistoryListResponse,
+    LatestResult,
+    LatestResultsResponse,
     SingleDetectResponse,
     StatsResponse,
+    StreamStatusResponse,
     VizDetectResponse,
     VizStep,
 )

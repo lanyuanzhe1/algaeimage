@@ -171,6 +171,8 @@ Vite dev server 自动代理 `/api` 和 `/static` 到 `127.0.0.1:8000`。
 | `POST /api/v1/detect/visualize` | **单图检测 + 5步管线可视化**（返回 base64 中间结果） |
 | `GET /api/v1/detect/latest?n=10` | **实时轮询** — 最近 N 条检测结果（无 base64） |
 | `GET /api/v1/detect/stream-status` | **采集状态** — active/fps/帧数/运行时间 |
+| `POST /api/v1/detect/stream/start` | **启动采集** — 一键启动相机 SDK 直连 |
+| `POST /api/v1/detect/stream/stop` | **停止采集** — 停止相机并清理资源 |
 | `GET /api/v1/dashboard/stats` | 仪表板统计 |
 | `GET/ DELETE /api/v1/history` | 检测历史 CRUD |
 
@@ -182,8 +184,9 @@ Vite dev server 自动代理 `/api` 和 `/static` 到 `127.0.0.1:8000`。
 | 路由 | 页面 | 说明 |
 |------|------|------|
 | `/` | 首页 | 管线概览 + 功能卡片 |
-| `/detect` | 检测工具 | 拖拽上传 + 5步管线可视化 + 结果表格 + ECharts 图表 |
-| `/history` | 历史记录 | 分页表格 |
+| `/detect` | 手动检测 | 拖拽上传 + 5步管线可视化 + 结果表格 + ECharts 图表 |
+| `/detect/live` | **实时监测** | 一键启动相机 → 双栏实时展示（原始图 + YOLO标注） |
+| `/history` | 历史记录 | 分页表格 + 3s 自动轮询新记录 |
 | `/dashboard` | 数据统计 | StatsCards + 饼图 + 柱状图 |
 
 ### exe 打包（PyInstaller onedir）

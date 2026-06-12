@@ -307,7 +307,8 @@ class CameraController:
                                   raw_url, result_url,
                                   json.dumps(det_list),
                                   result.get("q_score", 0.0),
-                                  overall_risk))
+                                  overall_risk,
+                                  time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())))
                 if len(_db_batch) >= _DB_BATCH_SIZE:
                     self._flush_db_batch(_db_batch)
                     _db_batch.clear()
@@ -332,8 +333,8 @@ class CameraController:
             db_conn = sqlite3.connect(DB_PATH, timeout=5)
             db_conn.executemany(
                 """INSERT OR REPLACE INTO detection_history
-                       (id, filename, image_path, result_path, detections, q_score, risk_level)
-                   VALUES (?, ?, ?, ?, ?, ?, ?)""",
+                       (id, filename, image_path, result_path, detections, q_score, risk_level, created_at)
+                   VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
                 batch,
             )
             db_conn.commit()

@@ -282,6 +282,8 @@ class CameraController:
                     })
 
                 stream_result = {
+                    "id": f"live_{frame_id:06d}",
+                    "filename": f"live_{frame_id:06d}",
                     "detections": det_list,
                     "frame_id": frame_id,
                     "risk_level": overall_risk,

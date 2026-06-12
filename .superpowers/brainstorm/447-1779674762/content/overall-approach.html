@@ -1,0 +1,89 @@
+<h2>整体布局方向 — 从"简陋"到"产品级"</h2>
+<p class="subtitle">当前 V1.0 是简单的 Tab 切换页面。模板是精致的监控仪表板。我们应该走哪个方向？</p>
+
+<div class="split">
+  <div class="mockup">
+    <div class="mockup-header">当前 V1.0 — Tab 式工具页</div>
+    <div class="mockup-body" style="font-size:13px; background:#f8fafb; min-height:320px;">
+      <div style="background:linear-gradient(135deg,#1e6f5c,#29a587);color:#fff;padding:14px;border-radius:6px 6px 0 0;">
+        <strong>藻影卫士 V1.0</strong>
+        <span style="opacity:0.7;font-size:11px;margin-left:8px;">V1.0</span>
+      </div>
+      <div style="display:flex;gap:4px;background:#fff;border-bottom:1px solid #e2e8f0;padding:8px 12px;">
+        <span style="padding:6px 12px;color:#1e6f5c;border-bottom:2px solid #1e6f5c;font-weight:600;">检测</span>
+        <span style="padding:6px 12px;color:#64748b;">历史记录</span>
+        <span style="padding:6px 12px;color:#64748b;">仪表板</span>
+        <span style="padding:6px 12px;color:#94a3b8;">设备管理</span>
+        <span style="padding:6px 12px;color:#94a3b8;">人工复核</span>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 2fr;gap:12px;padding:14px;">
+        <div style="border:2px dashed #d8e5f2;border-radius:6px;padding:20px;text-align:center;color:#94a3b8;font-size:12px;">上传区域</div>
+        <div style="border:1px solid #e2e8f0;border-radius:6px;padding:20px;text-align:center;color:#94a3b8;font-size:12px;">检测结果</div>
+      </div>
+      <div style="padding:8px 14px;color:#64748b;font-size:11px;text-align:center;">
+        ⚡ 功能可用 · 视觉朴素 · 缺乏专业感
+      </div>
+    </div>
+  </div>
+
+  <div class="mockup">
+    <div class="mockup-header">模板 — 监控仪表板</div>
+    <div class="mockup-body" style="font-size:13px; background:#f4f8fc; min-height:320px;">
+      <div style="display:flex;justify-content:space-between;padding:10px;background:rgba(255,255,255,.9);border-radius:6px 6px 0 0;align-items:center;">
+        <strong>藻影卫士 预警平台</strong>
+        <span style="background:rgba(22,163,74,.1);color:#16a34a;padding:4px 8px;border-radius:4px;font-size:11px;">🟢 在线</span>
+      </div>
+      <div style="background:#fff;padding:8px;display:flex;gap:6px;border-radius:0 0 6px 6px;overflow:hidden;font-size:10px;margin-bottom:8px;">
+        <span style="background:linear-gradient(135deg,#1976d2,#0891b2);color:#fff;padding:4px 6px;border-radius:4px;">①偏振采集→</span>
+        <span style="padding:4px 6px;background:#e8f0fa;border-radius:4px;">②Stokes重建→</span>
+        <span style="padding:4px 6px;background:#e8f0fa;border-radius:4px;">③增强→</span>
+        <span style="padding:4px 6px;background:#e8f0fa;border-radius:4px;">④YOLO→</span>
+        <span style="padding:4px 6px;background:#e8f0fa;border-radius:4px;">⑤预警</span>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 2fr 1fr;gap:6px;font-size:10px;">
+        <div style="background:#fff;border-radius:4px;padding:8px;">
+          <div style="font-weight:600;margin-bottom:6px;">设备点位</div>
+          <div style="background:rgba(25,118,210,.08);padding:6px;border-radius:3px;margin-bottom:4px;">🟠 A1 养殖池</div>
+          <div style="background:rgba(25,118,210,.04);padding:6px;border-radius:3px;margin-bottom:4px;">🟡 水库取水口</div>
+          <div style="background:rgba(25,118,210,.04);padding:6px;border-radius:3px;">🔴 冷源取水口</div>
+        </div>
+        <div style="background:#0a1628;border-radius:4px;padding:20px;text-align:center;color:#d8f6ff;">🔬 显微图像</div>
+        <div style="font-size:10px;">
+          <div style="background:#fff;border-radius:4px;padding:6px;margin-bottom:6px;">📋 运维状态</div>
+          <div style="background:#fff;border-radius:4px;padding:6px;">🔔 风险预警</div>
+        </div>
+      </div>
+      <div style="padding:8px;color:#64748b;font-size:11px;text-align:center;">
+        ✨ 精致 · 多面板 · 管线和指标可视化 · 但<strong>使用模拟数据</strong>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <h3>核心问题：V1 产品应该采用哪种设计哲学？</h3>
+</div>
+
+<div class="options">
+  <div class="option" data-choice="dashboard-first" onclick="toggleSelect(this)">
+    <div class="letter">A</div>
+    <div class="content">
+      <h3>Dashboard 优先</h3>
+      <p>像模板一样，首页就是仪表板总览。检测功能作为dashboard的一个操作入口。适合"监控"场景——打开页面就能看到全局状态。</p>
+    </div>
+  </div>
+  <div class="option" data-choice="task-first" onclick="toggleSelect(this)">
+    <div class="letter">B</div>
+    <div class="content">
+      <h3>任务优先（保持Tab）</h3>
+      <p>保留Tab式工具页结构，但将每个Tab页升级到模板的设计品质。检测页是核心操作入口。适合"工具"场景——用户带着明确任务来。</p>
+    </div>
+  </div>
+  <div class="option" data-choice="hybrid" onclick="toggleSelect(this)">
+    <div class="letter">C</div>
+    <div class="content">
+      <h3>混合方案</h3>
+      <p>Dashboard作为默认首页，展示全局统计+最近检测+管线状态。顶部导航可切换到"检测工具"、"历史记录"等独立页面。既有监控的全局感，又保留工具的深度操作。</p>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,18 @@
+{
+  "pipeline": "HSV_no_RDN",
+  "mAP50": 0.35437920124166467,
+  "per_class": {
+    "Other-phytoplankton": 0.3062830646961344,
+    "Non-phytoplankton": 0.13624836982934996,
+    "Woronichinia": 0.6440894482594846,
+    "Spiroides": 0.5943660325150899,
+    "Dinobryon": 0.09090909090826446
+  },
+  "num_images": 293,
+  "total_detections": 2562,
+  "total_gt_boxes": 3162,
+  "avg_time_s": 0.653,
+  "device": "cuda",
+  "yolo_weights": "E:\\code\\codex\\code\\Polar_sim_0520\\output\\yolo_training_hsv\\v8l_hsv\\weights\\best.pt",
+  "note": "HSV polarization \u2192 I_enh v2 \u2192 YOLOv8l. NO RDN reconstruction."
+}

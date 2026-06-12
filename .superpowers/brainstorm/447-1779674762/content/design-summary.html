@@ -1,0 +1,83 @@
+<h2>确认：V1 前端改版设计方向</h2>
+<p class="subtitle">以下是基于你的选择确定的整体方案，请确认后进入设计文档撰写</p>
+
+<div class="section">
+  <h3>已确认的设计决策</h3>
+  <table style="width:100%;font-size:14px;border-collapse:collapse;">
+    <tr style="border-bottom:1px solid rgba(0,0,0,.06);">
+      <td style="padding:10px;font-weight:600;white-space:nowrap;">整体布局</td>
+      <td style="padding:10px;">混合方案 — Dashboard 首页 + 顶部导航切换功能页</td>
+    </tr>
+    <tr style="border-bottom:1px solid rgba(0,0,0,.06);">
+      <td style="padding:10px;font-weight:600;white-space:nowrap;">视觉模板</td>
+      <td style="padding:10px;">以 <code>algae_guardian_platform.html</code> 为基准，全面板展示</td>
+    </tr>
+    <tr style="border-bottom:1px solid rgba(0,0,0,.06);">
+      <td style="padding:10px;font-weight:600;white-space:nowrap;">配色</td>
+      <td style="padding:10px;">蓝青色系 + 四级风险色（红/橙/黄/绿）</td>
+    </tr>
+    <tr style="border-bottom:1px solid rgba(0,0,0,.06);">
+      <td style="padding:10px;font-weight:600;white-space:nowrap;">未完成功能</td>
+      <td style="padding:10px;">静态占位模块展示，不隐藏</td>
+    </tr>
+  </table>
+</div>
+
+<div class="section">
+  <h3>页面结构规划</h3>
+  <div style="background:rgba(25,118,210,.04);border:1px solid rgba(25,118,210,.15);border-radius:8px;padding:16px;">
+    <div style="display:flex;gap:8px;margin-bottom:12px;font-size:12px;">
+      <span style="padding:4px 8px;background:rgba(25,118,210,.1);border-radius:4px;font-weight:600;">🏠 Dashboard 首页</span>
+      <span style="padding:4px 8px;background:#fff;border-radius:4px;">🔍 检测工具</span>
+      <span style="padding:4px 8px;background:#fff;border-radius:4px;">📋 历史记录</span>
+      <span style="padding:4px 8px;background:#fff;border-radius:4px;">📊 数据统计</span>
+      <span style="padding:4px 8px;background:#fff;border-radius:4px;color:#94a3b8;">⚙ 设备管理</span>
+      <span style="padding:4px 8px;background:#fff;border-radius:4px;color:#94a3b8;">✅ 人工复核</span>
+    </div>
+    <div style="font-size:12px;color:#64748b;">
+      实色 = 已实现功能 &nbsp;|&nbsp; 灰色 = 静态占位模块
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <h3>Dashboard 首页布局（3栏）</h3>
+  <div style="background:#f4f8fc;border-radius:8px;padding:12px;display:grid;grid-template-columns:240px 1fr 260px;gap:10px;font-size:11px;">
+    <div style="background:#fff;border-radius:6px;padding:10px;">
+      <div style="font-weight:600;margin-bottom:8px;">📡 数据概览 · 统计面板</div>
+      <div style="color:#64748b;margin-bottom:6px;">▸ 总检测 / 今日 / 高危</div>
+      <div style="color:#64748b;margin-bottom:6px;">▸ 管线状态指示</div>
+      <div style="color:#64748b;margin-bottom:6px;">▸ 快速操作按钮</div>
+    </div>
+    <div style="background:#fff;border-radius:6px;padding:10px;">
+      <div style="font-weight:600;margin-bottom:8px;">🔬 核心检测区</div>
+      <div style="border:2px dashed rgba(25,118,210,.2);border-radius:6px;padding:30px;text-align:center;color:#64748b;">
+        图片上传 + 检测结果显示<br>
+        <span style="font-size:10px;">（V1 核心功能，直接可用）</span>
+      </div>
+    </div>
+    <div style="background:#fff;border-radius:6px;padding:10px;">
+      <div style="font-weight:600;margin-bottom:8px;">📋 信息面板</div>
+      <div style="color:#64748b;margin-bottom:6px;">▸ 最近检测列表</div>
+      <div style="color:#94a3b8;margin-bottom:6px;">▸ 风险摘要 · 占位</div>
+      <div style="color:#94a3b8;">▸ 数据闭环 · 占位</div>
+    </div>
+  </div>
+</div>
+
+<div class="options">
+  <div class="option" data-choice="confirm" onclick="toggleSelect(this)">
+    <div class="letter">✓</div>
+    <div class="content">
+      <h3>确认，开始写设计文档</h3>
+      <p>以上方向正确，可以进入详细设计文档撰写阶段。</p>
+    </div>
+  </div>
+  <div class="option" data-choice="adjust" onclick="toggleSelect(this)">
+    <div class="letter">✎</div>
+    <div class="content">
+      <h3>需要调整</h3>
+      <p>有些地方需要修改，我会在终端详细说明。</p>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,103 @@
+<h2>混合方案：Dashboard 首页设计</h2>
+<p class="subtitle">Dashboard 是默认首页。它应该展示什么？以下是两种侧重点不同的方案</p>
+
+<div class="options">
+  <div class="option" data-choice="monitoring-dashboard" onclick="toggleSelect(this)">
+    <div class="letter">A</div>
+    <div class="content">
+      <h3>监控型 Dashboard</h3>
+      <p>模仿模板风格：管线状态可视化 + 统计指标卡 + 最近检测快览 + 风险摘要。<strong>强调"看"</strong>——打开页面就能感知系统运行状态。检测按钮作为突出 CTA 入口。</p>
+    </div>
+  </div>
+  <div class="option" data-choice="tool-dashboard" onclick="toggleSelect(this)">
+    <div class="letter">B</div>
+    <div class="content">
+      <h3>工具型 Dashboard</h3>
+      <p>首页直接展示上传检测区域 + 快捷操作 + 下方放统计图表。<strong>强调"做"</strong>——打开页面就能开始检测。统计和历史概要作为辅助信息放在下方。</p>
+    </div>
+  </div>
+</div>
+
+<div class="section" style="margin-top:32px;">
+  <h3>两种 Dashboard 的布局对比</h3>
+</div>
+
+<div class="split">
+  <div class="mockup">
+    <div class="mockup-header">A: 监控型 — "一览全局，点击进入检测"</div>
+    <div class="mockup-body" style="font-size:12px; background:#f4f8fc; min-height:360px;">
+      <div style="background:#fff;padding:10px;border-radius:6px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;">
+        <strong>藻影卫士</strong>
+        <span style="font-size:11px;">检测工具 | 历史记录 | 仪表板</span>
+      </div>
+      <div style="display:flex;gap:6px;font-size:10px;margin-bottom:8px;overflow:hidden;">
+        <span style="background:linear-gradient(135deg,#1976d2,#0891b2);color:#fff;padding:3px 5px;border-radius:3px;">①采集→</span>
+        <span style="padding:3px 5px;background:#e8f0fa;border-radius:3px;">②重建→</span>
+        <span style="padding:3px 5px;background:#e8f0fa;border-radius:3px;">③增强→</span>
+        <span style="padding:3px 5px;background:#e8f0fa;border-radius:3px;">④YOLO→</span>
+        <span style="padding:3px 5px;background:#e8f0fa;border-radius:3px;">⑤预警</span>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:8px;">
+        <div style="background:#fff;border-radius:4px;padding:10px;text-align:center;">
+          <div style="font-size:24px;font-weight:700;color:#1976d2;">128</div>
+          <div style="font-size:10px;color:#64748b;">总检测次数</div>
+        </div>
+        <div style="background:#fff;border-radius:4px;padding:10px;text-align:center;">
+          <div style="font-size:24px;font-weight:700;color:#dc2626;">3</div>
+          <div style="font-size:10px;color:#64748b;">高危预警</div>
+        </div>
+        <div style="background:#fff;border-radius:4px;padding:10px;text-align:center;">
+          <div style="font-size:24px;font-weight:700;color:#16a34a;">96%</div>
+          <div style="font-size:10px;color:#64748b;">系统健康</div>
+        </div>
+      </div>
+      <button style="width:100%;padding:12px;background:linear-gradient(135deg,#1976d2,#0891b2);color:#fff;border:none;border-radius:6px;font-size:14px;font-weight:600;margin-bottom:8px;">🔍 开始新检测</button>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:10px;">
+        <div style="background:#fff;border-radius:4px;padding:8px;">
+          <div style="font-weight:600;margin-bottom:4px;">最近检测</div>
+          <div style="color:#64748b;">🔴 sample_042.tif</div>
+          <div style="color:#64748b;">🟢 sample_041.tif</div>
+          <div style="color:#64748b;">🟡 sample_040.tif</div>
+        </div>
+        <div style="background:#fff;border-radius:4px;padding:8px;">
+          <div style="font-weight:600;margin-bottom:4px;">藻类分布</div>
+          <div style="height:60px;background:linear-gradient(180deg,rgba(25,118,210,.1),transparent);border-radius:3px;"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="mockup">
+    <div class="mockup-header">B: 工具型 — "上来就干活，统计在下方"</div>
+    <div class="mockup-body" style="font-size:12px; background:#f4f8fc; min-height:360px;">
+      <div style="background:#fff;padding:10px;border-radius:6px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;">
+        <strong>藻影卫士</strong>
+        <span style="font-size:11px;">检测工具 | 历史记录 | 仪表板</span>
+      </div>
+      <div style="border:2px dashed #1976d2;background:rgba(25,118,210,.04);border-radius:8px;padding:28px;text-align:center;margin-bottom:8px;">
+        <div style="font-size:32px;margin-bottom:6px;">🔬</div>
+        <div style="font-weight:600;margin-bottom:4px;">拖拽图片到此处 或 点击选择</div>
+        <div style="font-size:10px;color:#64748b;">JPG / PNG / TIFF / BMP · 最多50张</div>
+      </div>
+      <div style="display:flex;gap:6px;margin-bottom:8px;">
+        <button style="flex:1;padding:8px;border:1px solid #1976d2;color:#1976d2;background:#fff;border-radius:6px;font-size:12px;">📁 选择文件夹</button>
+        <button style="flex:1;padding:8px;background:#1976d2;color:#fff;border:none;border-radius:6px;font-size:12px;">单图检测</button>
+        <button style="flex:1;padding:8px;background:rgba(25,118,210,.1);color:#1976d2;border:none;border-radius:6px;font-size:12px;">批量处理</button>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;font-size:10px;">
+        <div style="background:#fff;border-radius:4px;padding:8px;text-align:center;">
+          <div style="font-size:18px;font-weight:700;">128</div>
+          <div style="color:#64748b;">总检测</div>
+        </div>
+        <div style="background:#fff;border-radius:4px;padding:8px;text-align:center;">
+          <div style="font-size:18px;font-weight:700;color:#dc2626;">3</div>
+          <div style="color:#64748b;">高危</div>
+        </div>
+        <div style="background:#fff;border-radius:4px;padding:8px;text-align:center;">
+          <div style="font-size:18px;font-weight:700;">12</div>
+          <div style="color:#64748b;">今日</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

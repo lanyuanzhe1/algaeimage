@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** 在 RTX 4090 服务器上，使用 HSV 偏振模拟方法 + RDN 自训练 + YOLOv8l，对 LifeWatch 95 类 302k 样本完成全流程处理与训练。
+**Goal:** 在 Tesla V100-SXM2-32GB 服务器上，使用 HSV 偏振模拟方法 + RDN 自训练 + YOLOv8l，对 LifeWatch 95 类 302k 样本完成全流程处理与训练。
 
 **Architecture:** 本地准备代码和数据集 → 上传至新服务器 → 服务器端顺序执行：RDN 小样本训练 → 全量 RGB 经 HSV+RDN+I_enh 转为 YOLO 训练图 → YOLOv8l 300 epoch 训练。
 
@@ -10,11 +10,28 @@
 
 **前置条件:** 用户提供新服务器的 IP、端口、root 密码。
 
+**服务器连接:**
+```bash
+ssh -p 44448 root@tssjfkari2ofchucsnow.deepln.com
+# Password: 31N41wYaWf5hsGtZNSYcyRHsTlkP32Dx
+```
+| 项目 | 值 |
+|------|-----|
+| Host | tssjfkari2ofchucsnow.deepln.com |
+| Port | 44448 |
+| User | root |
+| GPU | Tesla V100-SXM2-32GB |
+| VRAM | 32 GB |
+| Python | /data/miniconda/envs/torch/bin/python (3.12, PyTorch 2.10.0+cu128) |
+| 工作目录 | /data/lifewatch_hsv/ |
+| /data 可用 | 51 GB |
+
 ---
 
 ### Task 0: 创建目录结构和 `__init__.py`
 
 **Files:**
+
 - Create: `code/Polar_sim_0522/image_processing/__init__.py`
 - Create: `code/Polar_sim_0522/ml/__init__.py`
 - Create: `code/Polar_sim_0522/ml/models/` (目录)
@@ -32,11 +49,13 @@ mkdir -p e:/code/codex/code/Polar_sim_0522/docs
 - [ ] **Step 2: 写出 `__init__.py` 文件**
 
 `image_processing/__init__.py`:
+
 ```python
 """Image processing: polarization simulation, enhancement, quality assessment."""
 ```
 
 `ml/__init__.py`:
+
 ```python
 """Machine learning: RDN reconstruction, YOLO detection, tracker."""
 ```
@@ -53,6 +72,7 @@ git commit -m "feat: create Polar_sim_0522 directory structure"
 ### Task 1: 复制 `hsv_polarization.py`（HSV 偏振模拟）
 
 **Files:**
+
 - Create: `code/Polar_sim_0522/hsv_polarization.py`
 - Source: `code/Polar_sim_0520/hsv_polarization.py` (完整复制)
 
@@ -86,6 +106,7 @@ git commit -m "feat: copy hsv_polarization.py from Polar_sim_0520"
 ### Task 2: 复制 `image_processing/polarization.py`
 
 **Files:**
+
 - Create: `code/Polar_sim_0522/image_processing/polarization.py`
 - Source: `code/Polar_sim_0520/image_processing/polarization.py` (完整复制)
 
@@ -121,6 +142,7 @@ git commit -m "feat: copy polarization.py from Polar_sim_0520"
 ### Task 3: 复制 `image_processing/enhancement.py`
 
 **Files:**
+
 - Create: `code/Polar_sim_0522/image_processing/enhancement.py`
 - Source: `code/Polar_sim_0520/image_processing/enhancement.py` (完整复制)
 
@@ -156,6 +178,7 @@ git commit -m "feat: copy enhancement.py from Polar_sim_0520"
 ### Task 4: 复制 `ml/reconstructor.py`
 
 **Files:**
+
 - Create: `code/Polar_sim_0522/ml/reconstructor.py`
 - Source: `code/Polar_sim_0520/ml/reconstructor.py`
 
@@ -190,6 +213,7 @@ git commit -m "feat: copy reconstructor.py from Polar_sim_0520"
 ### Task 5: 创建服务器连接模块 `deploy/cloud_server.py`
 
 **Files:**
+
 - Create: `code/Polar_sim_0522/deploy/cloud_server.py`
 
 此模块封装 paramiko SSH 连接，支持 `run()`, `upload()`, `download()`, `upload_text()`。
@@ -333,6 +357,7 @@ git commit -m "feat: add CloudServer SSH helper for new server"
 ### Task 6: 创建服务器环境配置脚本 `deploy/setup_env.py`
 
 **Files:**
+
 - Create: `code/Polar_sim_0522/deploy/setup_env.py`
 
 此脚本连接新服务器，检查 GPU/磁盘/Python 环境，并安装缺失的依赖。
@@ -454,6 +479,7 @@ git commit -m "feat: add server environment setup script"
 ### Task 7: 创建数据上传脚本 `deploy/upload_all.py`
 
 **Files:**
+
 - Create: `code/Polar_sim_0522/deploy/upload_all.py`
 
 此脚本将 LifeWatch 数据集 (zip + split 文件) + 项目代码 + RDN 训练脚本上传到新服务器。
@@ -570,6 +596,7 @@ git commit -m "feat: add data+code upload script"
 ### Task 8: 创建 RDN 训练脚本 `ml/train_rdn.py`
 
 **Files:**
+
 - Create: `code/Polar_sim_0522/ml/train_rdn.py`
 
 此脚本在服务器端运行，从 LifeWatch 小样本（3000 张）生成 HSV 4 通道训练数据，训练 RDN 去噪网络。
@@ -821,6 +848,7 @@ git commit -m "feat: add RDN training script for LifeWatch HSV data"
 ### Task 9: 创建全量管线脚本 `deploy/run_pipeline.py`
 
 **Files:**
+
 - Create: `code/Polar_sim_0522/deploy/run_pipeline.py`
 
 此脚本在服务器端执行阶段 3：遍历所有 LifeWatch RGB 图像 → HSV 4ch → RDN 重建 → I_enh v2 → YOLO 训练图 + Label。
@@ -1112,6 +1140,7 @@ git commit -m "feat: add full LifeWatch HSV pipeline script"
 ### Task 10: 创建 YOLOv8l 训练脚本 `deploy/train_yolo.py`
 
 **Files:**
+
 - Create: `code/Polar_sim_0522/deploy/train_yolo.py`
 
 此脚本在服务器端启动 YOLOv8l 95 类训练。
@@ -1232,6 +1261,7 @@ git commit -m "feat: add YOLOv8l 95-class training script"
 ### Task 11: 创建总控脚本 `deploy/run_all.py`
 
 **Files:**
+
 - Create: `code/Polar_sim_0522/deploy/run_all.py`
 
 一键执行全流程的总控脚本，在所有代码和数据已上传后，在服务器端一键运行。

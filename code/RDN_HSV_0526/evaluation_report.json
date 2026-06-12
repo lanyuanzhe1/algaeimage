@@ -1,0 +1,17 @@
+{
+  "mAP50": 0.33025787026604625,
+  "per_class": {
+    "Other-phytoplankton": 0.2794902749022097,
+    "Non-phytoplankton": 0.1437549593148852,
+    "Woronichinia": 0.5489642489421624,
+    "Spiroides": 0.5881707772625823,
+    "Dinobryon": 0.09090909090839161
+  },
+  "num_images": 293,
+  "total_detections": 2838,
+  "total_gt_boxes": 3162,
+  "avg_time_s": 4.442351988151212,
+  "device": "cuda",
+  "rdn_weights": "E:\\code\\codex\\code\\RDN_HSV_0526\\checkpoint\\best.pth",
+  "yolo_weights": "E:\\code\\codex\\code\\Polar_sim_0520\\output\\yolo_training_hsv\\v8l_hsv\\weights\\best.pt"
+}

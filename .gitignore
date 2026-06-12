@@ -9,14 +9,22 @@ code/algae_guardian/backend/data/results/
 code/algae_guardian/backend/data/uploads/
 code/algae_guardian/backend/data/reviewed/
 code/algae_guardian/backend/data/training_pool/
-
+code/Polar_sim_0522/output/
+code/Polar_sim_0522/output/preview_2026-05-22/
 # Redundant Backups
 code/algae_guardian/data/rdn_output_v2_灰度备份/
-
+#v1网页前端对应的后端输入输出文件夹
+code/algae_image_v1/backend/data/results/
+code/algae_image_v1/backend/data/uploads/
 # Temp files
 session-log.txt
 *.log
 ~$*
+
+# Cache directories
+.ruff_cache/
+.pytest_cache/
+skills-lock.json
 
 # System files
 .DS_Store
@@ -25,7 +33,6 @@ Thumbs.db
 # Non-core folders and files
 code/SPDRDN/
 pic/
-项目文书/
 参考/
 render_market_survey_0508/
 video/
@@ -48,3 +55,21 @@ temp_log.txt
 
 # Polar_sim_0520 generated output
 code/Polar_sim_0520/output/
+
+#RDN_HSV_0526
+code/RDN_HSV_0526/data
+code/algae_image_v2/backend/data/
+code/picture/
+
+# PyInstaller build artifacts
+dist/
+build/
+*.spec
+code/algae_image_v2/dist-release
+node_modules/
+.playwright-mcp/
+.claude/settings.json
+.claude/settings.local.json
+.superpowers/
+
+Development/

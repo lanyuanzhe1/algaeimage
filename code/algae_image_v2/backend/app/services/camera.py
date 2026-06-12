@@ -459,7 +459,7 @@ class CameraController:
         logger.info("Camera acquisition started.")
         return {"status": "started"}
 
-    def stop(self) -> None:
+    def stop(self) -> dict:
         """Stop grabbing, join worker thread, close device."""
         self._running = False
 
@@ -481,6 +481,7 @@ class CameraController:
             self._frame_queue.clear()
 
         logger.info("Camera acquisition stopped.")
+        return {"status": "stopped"}
 
     def is_active(self) -> bool:
         """Return True if the camera is currently acquiring."""

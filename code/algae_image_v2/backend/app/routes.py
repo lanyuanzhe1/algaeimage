@@ -17,6 +17,7 @@ import numpy as np
 from .config import UPLOAD_DIR, RESULT_DIR
 from .database import get_db
 from .services.stream_state import stream_state
+from .services.camera import camera_controller
 from .schemas import (
     BatchDetectResponse,
     BatchResult,
@@ -302,8 +303,10 @@ async def get_latest_results(n: int = Query(default=10, ge=1, le=50)):
             filename=r["filename"],
             detections=[DetectionItem(**d) for d in r["detections"]],
             q_score=r["q_score"],
-            risk_level=r["risk_level"],
+            risk_level=r.get("risk_level"),
             processing_time_ms=r["processing_time_ms"],
+            raw_image_url=r.get("raw_image_url", ""),
+            result_image_url=r.get("result_image_url", ""),
         )
         for r in raw
     ]
@@ -314,4 +317,23 @@ async def get_latest_results(n: int = Query(default=10, ge=1, le=50)):
 async def get_stream_status():
     """Return live stream status (fps, frame count, uptime)."""
     return StreamStatusResponse(**stream_state.get_status())
+
+
+@router.post("/detect/stream/start")
+async def stream_start():
+    """Start live camera acquisition."""
+    if camera_controller is None:
+        raise HTTPException(status_code=503, detail="Camera SDK not available on this system")
+    result = camera_controller.start()
+    if result.get("status") == "error":
+        raise HTTPException(status_code=400, detail=result.get("detail", "Unknown error"))
+    return result
+
+
+@router.post("/detect/stream/stop")
+async def stream_stop():
+    """Stop live camera acquisition."""
+    if camera_controller is None:
+        raise HTTPException(status_code=503, detail="Camera SDK not available")
+    return camera_controller.stop()
 

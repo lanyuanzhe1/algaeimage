@@ -54,7 +54,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 import { getHistory, getHistoryDetail, deleteHistory } from '@/api'
 import ResultTable from '@/components/ResultTable.vue'
 
@@ -92,5 +92,30 @@ async function removeItem(id) {
   } catch (e) { /* silently fail */ }
 }
 
-onMounted(fetchHistory)
+let _historyTimer = null
+
+onMounted(() => {
+  fetchHistory()
+  // Auto-poll for new records every 3s when on page 1
+  _historyTimer = setInterval(async () => {
+    if (page.value !== 1) return
+    try {
+      const res = await getHistory(1, limit)
+      const newItems = res.data.items || []
+      if (newItems.length && items.value.length) {
+        const existingIds = new Set(items.value.map(i => i.id))
+        const fresh = newItems.filter(i => !existingIds.has(i.id))
+        if (fresh.length) {
+          items.value = [...fresh, ...items.value].slice(0, limit * 5)
+        }
+      } else if (newItems.length) {
+        items.value = newItems
+      }
+    } catch (_e) { /* silently ignore poll errors */ }
+  }, 3000)
+})
+
+onUnmounted(() => {
+  if (_historyTimer) { clearInterval(_historyTimer); _historyTimer = null }
+})
 </script>

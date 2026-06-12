@@ -10,8 +10,10 @@ Architecture:
         → stream_state.add_result() → prune old images
 """
 import ctypes
+import json
 import logging
 import os
+import sqlite3
 import sys
 import threading
 import time
@@ -298,6 +300,25 @@ class CameraController:
 
                 stream_state.add_result(stream_result, raw_image_url=raw_url,
                                         result_image_url=result_url)
+
+                # Persist to SQLite history DB (sync — worker thread)
+                try:
+                    from backend.app.config import DB_PATH
+                    db_conn = sqlite3.connect(DB_PATH, timeout=5)
+                    db_conn.execute(
+                        """INSERT OR REPLACE INTO detection_history
+                               (id, filename, image_path, result_path, detections, q_score, risk_level)
+                           VALUES (?, ?, ?, ?, ?, ?, ?)""",
+                        (f"live_{frame_id:06d}", f"live_{frame_id:06d}",
+                         raw_url, result_url,
+                         json.dumps(det_list),
+                         result.get("q_score", 0.0),
+                         overall_risk),
+                    )
+                    db_conn.commit()
+                    db_conn.close()
+                except Exception:
+                    logger.exception("Failed to persist frame to history DB")
 
                 # Prune old images
                 self._prune_images()

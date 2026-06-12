@@ -84,7 +84,7 @@
 </template>
 
 <script setup>
-import { ref, computed, watch, onUnmounted } from 'vue'
+import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { useDetectStore } from '@/stores/detect'
 import StatsCards from '@/components/StatsCards.vue'
 import ResultTable from '@/components/ResultTable.vue'
@@ -144,7 +144,6 @@ async function handleStart() {
     const res = await store.start()
     if (res.status === 'started') {
       state.value = 'running'
-      store.startStreamPolling()
     } else {
       state.value = 'error'
       errorMsg.value = res.detail || '启动失败'
@@ -157,7 +156,6 @@ async function handleStart() {
 
 async function handleStop() {
   state.value = 'stopping'
-  store.stopStreamPolling()
   try {
     await store.stop()
   } catch (e) {
@@ -166,17 +164,24 @@ async function handleStop() {
   state.value = 'idle'
 }
 
-// Watch for stream going inactive externally (e.g. camera disconnected)
-watch(() => store.streamStatus.active, (active) => {
-  if (!active && state.value === 'running') {
-    state.value = 'idle'
-    store.stopStreamPolling()
-    errorMsg.value = '采集已中断，请检查相机连接'
+// Sync state on mount — if camera is already running, resume display
+onMounted(async () => {
+  // Check stream status to detect if camera is already active
+  try {
+    const { getStreamStatus } = await import('@/api')
+    const res = await getStreamStatus()
+    if (res.data.active) {
+      state.value = 'running'
+    }
+  } catch (_e) { /* backend may not be ready */ }
+  // If we're streaming, ensure polling is active
+  if (store.isStreaming) {
+    store.startStreamPolling()
   }
 })
 
 onUnmounted(() => {
-  store.stopStreamPolling()
+  // Don't stop polling — camera runs globally. Only stop if user clicked Stop.
 })
 </script>
 

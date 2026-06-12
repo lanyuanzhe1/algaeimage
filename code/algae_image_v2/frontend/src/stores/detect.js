@@ -36,13 +36,16 @@ export const useDetectStore = defineStore('detect', () => {
     const res = await startStream()
     if (res.data.status === 'started') {
       isStreaming.value = true
+      startStreamPolling()
     }
     return res.data
   }
 
   async function stop() {
+    stopStreamPolling()
     const res = await stopStream()
     isStreaming.value = false
+    liveResults.value = []
     return res.data
   }
 

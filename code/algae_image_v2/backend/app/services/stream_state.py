@@ -22,12 +22,14 @@ class StreamState:
 
     # ── write side (called from POST /detect) ──────────────────
 
-    def add_result(self, result: dict) -> None:
+    def add_result(self, result: dict, raw_image_url: str = "", result_image_url: str = "") -> None:
         """Push a detection result into the buffer."""
         with self._lock:
             if self._start_time is None:
                 self._start_time = time.time()
             self._total_frames += 1
+            result["raw_image_url"] = raw_image_url
+            result["result_image_url"] = result_image_url
             self._results.insert(0, result)
             # Trim to max size
             if len(self._results) > MAX_RESULTS:

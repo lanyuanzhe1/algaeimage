@@ -12,6 +12,11 @@ const routes = [
     component: () => import('@/views/DetectPage.vue'),
   },
   {
+    path: '/detect/live',
+    name: 'liveMonitor',
+    component: () => import('@/views/LiveMonitor.vue'),
+  },
+  {
     path: '/history',
     name: 'history',
     component: () => import('@/views/HistoryPage.vue'),

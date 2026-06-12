@@ -53,4 +53,14 @@ export function getStreamStatus() {
   return api.get('/detect/stream-status')
 }
 
+/** Start camera acquisition */
+export function startStream() {
+  return api.post('/detect/stream/start')
+}
+
+/** Stop camera acquisition */
+export function stopStream() {
+  return api.post('/detect/stream/stop')
+}
+
 export default api

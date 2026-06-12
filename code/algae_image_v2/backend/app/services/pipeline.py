@@ -26,16 +26,27 @@ class PipelineRunner:
         return cls(yolo, device, model_key)
 
     def run(self, image_path: str) -> dict:
-        """Execute V2 HSV pipeline on a single RGB micrograph.
+        """Execute V2 HSV pipeline on a single RGB micrograph from a file path.
 
         Pipeline: RGB → HSV polarization → (RDN skip) → I_enh v2 → YOLO
         """
-        t0 = time.time()
-
         rgb = cv2.imread(image_path)
         if rgb is None:
             raise ValueError(f"Cannot read image: {image_path}")
         rgb = cv2.cvtColor(rgb, cv2.COLOR_BGR2RGB)
+        return self._run_core(rgb)
+
+    def run_ndarray(self, rgb: np.ndarray) -> dict:
+        """Execute V2 HSV pipeline on an in-memory RGB ndarray (no disk I/O).
+
+        Used by camera worker to avoid saving temp files.
+        `rgb` must be H×W×3 uint8 RGB.
+        """
+        return self._run_core(rgb)
+
+    def _run_core(self, rgb: np.ndarray) -> dict:
+        """Core pipeline logic shared by run() and run_ndarray()."""
+        t0 = time.time()
 
         # 1. HSV polarization simulation
         I_channels = simulate_polarization(rgb)

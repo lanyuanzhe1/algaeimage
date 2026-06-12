@@ -221,6 +221,12 @@ class CameraController:
         from backend.app.services.stream_state import stream_state
         from core_engine.config import get_risk_level
 
+        # Batch DB writes: accumulate det_list strings, flush every BATCH_SIZE frames
+        _db_batch: list[tuple] = []
+        _DB_BATCH_SIZE = 10
+        _JPEG_QUALITY = 90
+        _JPEG_PARAMS = [cv2.IMWRITE_JPEG_QUALITY, _JPEG_QUALITY]
+
         while self._running:
             # ── Pop latest frame (clear queue, take [-1]) ─────────
             with self._frame_lock:
@@ -236,31 +242,26 @@ class CameraController:
 
             frame_id = self._total_frames + 1
             self._total_frames = frame_id
-            temp_path = os.path.join(self._live_dir, f"_temp_{frame_id:06d}.png")
 
             try:
-                # Save frame as temp PNG
-                cv2.imwrite(temp_path, cv2.cvtColor(frame, cv2.COLOR_RGB2BGR))
-
-                # Run detection pipeline
-                result = self._pipeline.run(temp_path)
+                # Run pipeline directly on ndarray (no temp file I/O)
+                result = self._pipeline.run_ndarray(frame)
                 detections = result.get("detections", [])
                 result_image = result.get("result_image")  # RGB ndarray
 
-                # Save raw frame
-                raw_name = f"raw_{frame_id:06d}.png"
+                # Save raw frame as JPEG (5-10x faster than PNG, smaller files)
+                raw_name = f"raw_{frame_id:06d}.jpg"
                 raw_path = os.path.join(self._live_dir, raw_name)
-                cv2.imwrite(raw_path, cv2.cvtColor(frame, cv2.COLOR_RGB2BGR))
+                cv2.imwrite(raw_path, cv2.cvtColor(frame, cv2.COLOR_RGB2BGR), _JPEG_PARAMS)
 
-                # Save result image
-                result_name = f"result_{frame_id:06d}.png"
+                # Save result image as JPEG
+                result_name = f"result_{frame_id:06d}.jpg"
                 result_path = os.path.join(self._live_dir, result_name)
                 if result_image is not None:
-                    cv2.imwrite(result_path, cv2.cvtColor(result_image, cv2.COLOR_RGB2BGR))
+                    cv2.imwrite(result_path, cv2.cvtColor(result_image, cv2.COLOR_RGB2BGR), _JPEG_PARAMS)
                 else:
-                    # Fallback: draw detection boxes ourselves
                     result_image = self._draw_detection_boxes(frame.copy(), detections)
-                    cv2.imwrite(result_path, cv2.cvtColor(result_image, cv2.COLOR_RGB2BGR))
+                    cv2.imwrite(result_path, cv2.cvtColor(result_image, cv2.COLOR_RGB2BGR), _JPEG_PARAMS)
 
                 # Compute overall risk level
                 risk_levels = [get_risk_level(d["class_name"]) for d in detections]
@@ -271,7 +272,7 @@ class CameraController:
                 else:
                     overall_risk = "low"
 
-                # Build detection dicts with image URLs
+                # Build detection dicts
                 det_list = []
                 for d in detections:
                     det_list.append({
@@ -301,24 +302,15 @@ class CameraController:
                 stream_state.add_result(stream_result, raw_image_url=raw_url,
                                         result_image_url=result_url)
 
-                # Persist to SQLite history DB (sync — worker thread)
-                try:
-                    from backend.app.config import DB_PATH
-                    db_conn = sqlite3.connect(DB_PATH, timeout=5)
-                    db_conn.execute(
-                        """INSERT OR REPLACE INTO detection_history
-                               (id, filename, image_path, result_path, detections, q_score, risk_level)
-                           VALUES (?, ?, ?, ?, ?, ?, ?)""",
-                        (f"live_{frame_id:06d}", f"live_{frame_id:06d}",
-                         raw_url, result_url,
-                         json.dumps(det_list),
-                         result.get("q_score", 0.0),
-                         overall_risk),
-                    )
-                    db_conn.commit()
-                    db_conn.close()
-                except Exception:
-                    logger.exception("Failed to persist frame to history DB")
+                # Batch DB writes (flush every _DB_BATCH_SIZE frames)
+                _db_batch.append((f"live_{frame_id:06d}", f"live_{frame_id:06d}",
+                                  raw_url, result_url,
+                                  json.dumps(det_list),
+                                  result.get("q_score", 0.0),
+                                  overall_risk))
+                if len(_db_batch) >= _DB_BATCH_SIZE:
+                    self._flush_db_batch(_db_batch)
+                    _db_batch.clear()
 
                 # Prune old images
                 self._prune_images()
@@ -326,15 +318,28 @@ class CameraController:
             except Exception:
                 logger.exception(f"Worker error on frame {frame_id}, skipping.")
 
-            finally:
-                # Clean up temp file
-                try:
-                    if os.path.exists(temp_path):
-                        os.remove(temp_path)
-                except OSError:
-                    pass
+        # Flush remaining DB records before exit
+        if _db_batch:
+            self._flush_db_batch(_db_batch)
+            _db_batch.clear()
 
         logger.info("Worker thread stopped.")
+
+    def _flush_db_batch(self, batch: list[tuple]) -> None:
+        """Write a batch of detection records to SQLite in one transaction."""
+        try:
+            from backend.app.config import DB_PATH
+            db_conn = sqlite3.connect(DB_PATH, timeout=5)
+            db_conn.executemany(
+                """INSERT OR REPLACE INTO detection_history
+                       (id, filename, image_path, result_path, detections, q_score, risk_level)
+                   VALUES (?, ?, ?, ?, ?, ?, ?)""",
+                batch,
+            )
+            db_conn.commit()
+            db_conn.close()
+        except Exception:
+            logger.exception("Failed to flush batch to history DB")
 
     # ── Image pruning ────────────────────────────────────────────
 

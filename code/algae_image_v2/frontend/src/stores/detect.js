@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
-import { getLatestResults, getStreamStatus } from '@/api'
+import { getLatestResults, getStreamStatus, startStream, stopStream } from '@/api'
 
 export const useDetectStore = defineStore('detect', () => {
   const currentResult = ref(null)
@@ -8,7 +8,7 @@ export const useDetectStore = defineStore('detect', () => {
   const error = ref(null)
 
   // ── Live stream state ──────────────────────────────────────
-  const liveMode = ref(false)
+  const isStreaming = ref(false)
   const liveResults = ref([])
   const streamStatus = ref({ active: false, total_frames: 0, effective_fps: 0, elapsed_seconds: 0 })
   let _pollTimer = null
@@ -30,17 +30,25 @@ export const useDetectStore = defineStore('detect', () => {
     currentResult.value = null
   }
 
-  // ── Live mode ──────────────────────────────────────────────
-  function toggleLiveMode() {
-    liveMode.value = !liveMode.value
-    if (liveMode.value) {
-      startPolling()
-    } else {
-      stopPolling()
+  // ── Stream control ────────────────────────────────────────
+
+  async function start() {
+    const res = await startStream()
+    if (res.data.status === 'started') {
+      isStreaming.value = true
     }
+    return res.data
   }
 
-  function startPolling() {
+  async function stop() {
+    const res = await stopStream()
+    isStreaming.value = false
+    return res.data
+  }
+
+  // ── Polling ───────────────────────────────────────────────
+
+  function startStreamPolling() {
     _pollTimer = setInterval(async () => {
       try {
         const [rRes, sRes] = await Promise.all([
@@ -49,16 +57,20 @@ export const useDetectStore = defineStore('detect', () => {
         ])
         liveResults.value = rRes.data.results || []
         streamStatus.value = sRes.data
+        if (!sRes.data.active) {
+          isStreaming.value = false
+        }
       } catch (_e) { /* backend may be starting */ }
     }, 2000)
   }
 
-  function stopPolling() {
+  function stopStreamPolling() {
     if (_pollTimer) { clearInterval(_pollTimer); _pollTimer = null }
   }
 
   return {
     currentResult, isProcessing, error, setResult, clearResult, setError,
-    liveMode, liveResults, streamStatus, toggleLiveMode, startPolling, stopPolling
+    isStreaming, liveResults, streamStatus,
+    start, stop, startStreamPolling, stopStreamPolling,
   }
 })

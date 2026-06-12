@@ -1,6 +1,6 @@
 ---
 name: project-context
-description: 藻影卫士偏振显微监测 — 当前状态与目标，2026-06-11 更新
+description: 藻影卫士偏振显微监测 — 当前状态与目标，2026-06-13 更新
 metadata:
   type: project
 ---
@@ -11,7 +11,7 @@ metadata:
 
 | 目录 | 状态 | 说明 |
 |------|------|------|
-| `code/algae_image_v2/` | **当前产品主线** | V2.0，5类FMPD，HSV偏振，已封装exe |
+| `code/algae_image_v2/` | **当前产品主线** | V2.0，5类FMPD，HSV偏振，样机演示阶段 |
 | `code/algae_image_v1/` | 稳定备份 | V1.0，95类LifeWatch，结构张量+RDN，论文答辩版 |
 | `code/algae_guardian/` | 研究参考 | 训练/评估/实验 |
 | `code/Polar_sim_0520/` | 算法来源 | 结构张量管线，mAP50 84.7% |
@@ -25,9 +25,12 @@ metadata:
 - V2 exe 封装已完成（PyInstaller onedir，dist-release/）
 - Vue3 前端已迁移并丰富化（6 页面 SPA）
 - 阿里云 ECS 部署完成：前端 nginx + 后端 FastAPI systemd
-- **样机演示流程贯通**: 海康 MV-CA013-20GC SDK 直连 → 实时检测 → 前端轮询（5fps 采集, 2s 刷新）
-- 架构改进：shared schemas、拆分路由、config 边界明确
-- **当前阶段: 样机演示**，后续 Docker 封装迁移
+- **样机演示全链路贯通**: 海康 MV-CA013-20GC SDK 直连 → 一键启动 → 双栏实时展示（原始+YOLO标注）
+- Camera SD集成进 backend 进程（CameraController），前端独立路由 /detect/live
+- 跨页面采集保持、历史页自动轮询、DB 实时写入
+- **性能优化**: run_ndarray() 跳过文件I/O、JPEG替代PNG、批量DB写入
+- **时间戳修复**: UTC+8（SQLite CURRENT_TIMESTAMP → datetime('now','+8 hours')）
+- 有效处理速度 ~1.5-1.8fps（瓶颈在 YOLOv8l GPU 推理+HSV偏振）
 - 后续瓶颈：采集更多数据扩充 FMPD（当前仅293张）
 
 ## 环境

@@ -10,3 +10,4 @@
 - [旧前端XSS](legacy-frontend-xss-known.md) — frontend_legacy/ XSS已知不修，已被Vue3替代
 - [样机演示架构](demo_workflow_architecture.md) — SDK直连、stream_state缓冲、前端轮询、已知bug
 - [文档组织规范](document_organization_convention.md) — docs/ 统一 MM-DD_ 前缀命名，按时间线索引
+- [相机Worker性能模式](performance_patterns_camera_worker.md) — 避免磁盘往返、JPEG替代PNG、批量DB写入

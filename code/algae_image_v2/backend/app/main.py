@@ -36,7 +36,22 @@ async def lifespan(app: FastAPI):
     pipeline_runner = PipelineRunner.create(device=device)
     print(f"[Startup] Pipeline ready — Algae Image V2 (HSV, FMPD 5-class)")
 
+    # Init camera controller (lazy — won't open device until /stream/start)
+    try:
+        from backend.app.services.camera import camera_controller
+        camera_controller.configure(pipeline_runner, os.path.join(RESULT_DIR, "live"))
+        app.state.camera_controller = camera_controller
+        print("[Startup] Camera controller ready")
+    except Exception as e:
+        print(f"[Startup] Camera SDK not available (non-Windows or MVS not installed): {e}")
+        app.state.camera_controller = None
+
     yield
+
+    # Shutdown camera if running
+    if app.state.camera_controller:
+        app.state.camera_controller.finalize()
+        print("[Shutdown] Camera controller released")
 
     pipeline_runner = None
     print("[Shutdown] Models released")
@@ -64,8 +79,11 @@ app.include_router(data_router)
 
 os.makedirs(RESULT_DIR, exist_ok=True)
 os.makedirs(UPLOAD_DIR, exist_ok=True)
+_live_dir = os.path.join(RESULT_DIR, "live")
+os.makedirs(_live_dir, exist_ok=True)
 app.mount("/static/results", StaticFiles(directory=RESULT_DIR), name="results")
 app.mount("/static/uploads", StaticFiles(directory=UPLOAD_DIR), name="uploads")
+app.mount("/static/live", StaticFiles(directory=_live_dir), name="live")
 
 FRONTEND_DIR = resource_path("frontend")
 # In dev mode, serve the Vite build output (frontend/dist)

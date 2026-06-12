@@ -104,6 +104,8 @@ class LatestResult(BaseModel):
     q_score: float
     risk_level: Optional[str] = None
     processing_time_ms: float
+    raw_image_url: Optional[str] = None       # 原始采集图 URL，手动上传时为 null
+    result_image_url: Optional[str] = None    # YOLO 标注图 URL，手动上传时为 null
 
 
 class LatestResultsResponse(BaseModel):

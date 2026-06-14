@@ -5,6 +5,7 @@ import cv2
 import numpy as np
 
 from core_engine.polarization_sim import simulate_polarization
+from core_engine.reconstructor import reconstruct
 from core_engine.enhancement import enhance, compute_stokes
 from core_engine.inference import detect, load_yolo_by_key
 from core_engine.quality import compute_q_score
@@ -14,16 +15,19 @@ from core_engine.config import get_risk_color, SKIP_RDN, DEFAULT_MODEL, IENH_ALP
 class PipelineRunner:
     """Holds pre-loaded YOLO model. RDN is optional (skipped by default in V2)."""
 
-    def __init__(self, yolo_model, device: str = "cpu", model_key: str = DEFAULT_MODEL):
+    def __init__(self, yolo_model, device: str = "cpu", model_key: str = DEFAULT_MODEL,
+                 rdn_model=None):
         self.yolo = yolo_model
         self.device = device
         self.model_key = model_key
+        self.rdn_model = rdn_model
 
     @classmethod
-    def create(cls, model_key: str = DEFAULT_MODEL, device: str = "cpu"):
+    def create(cls, model_key: str = DEFAULT_MODEL, device: str = "cpu",
+               rdn_model=None):
         """Factory: load YOLO by model key from AVAILABLE_MODELS config."""
         yolo = load_yolo_by_key(model_key, device)
-        return cls(yolo, device, model_key)
+        return cls(yolo, device, model_key, rdn_model)
 
     def run(self, image_path: str) -> dict:
         """Execute V2 HSV pipeline on a single RGB micrograph from a file path.
@@ -51,8 +55,11 @@ class PipelineRunner:
         # 1. HSV polarization simulation
         I_channels = simulate_polarization(rgb)
 
-        # 2. (RDN skipped in V2 — HSV is deterministic, no denoising needed)
-        I_clean = I_channels  # pass-through
+        # 2. RDN reconstruction (structure tensor denoising)
+        if self.rdn_model is not None:
+            I_clean = reconstruct(self.rdn_model, I_channels, self.device)
+        else:
+            I_clean = I_channels  # fallback: HSV or CPU-only
 
         # 3. I_enh v2 de-scattering enhancement
         I_enh = enhance(I_clean, alpha=IENH_ALPHA, beta=IENH_BETA, gamma=IENH_GAMMA)
@@ -132,6 +139,28 @@ class PipelineRunner:
                         cv2.FONT_HERSHEY_SIMPLEX, 0.8, (255, 255, 0), 2)
             pol_montage[row*h:(row+1)*h, col*w:(col+1)*w] = ch_rgb
 
+        # Step 2.5: RDN reconstruction (only when RDN is loaded)
+        rdn_steps = []
+        if self.rdn_model is not None:
+            rdn_out = reconstruct(self.rdn_model, I_channels, self.device)
+            # Show denoised I0 vs original I0 side-by-side
+            I0_before = np.clip(I_channels[0] * 255, 0, 255).astype(np.uint8)
+            I0_after = np.clip(rdn_out[0] * 255, 0, 255).astype(np.uint8)
+            rdn_comparison = np.hstack([
+                cv2.cvtColor(I0_before, cv2.COLOR_GRAY2RGB),
+                cv2.cvtColor(I0_after, cv2.COLOR_GRAY2RGB),
+            ])
+            cv2.putText(rdn_comparison, "I0 before RDN", (10, 30),
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 0), 2)
+            cv2.putText(rdn_comparison, "I0 after RDN", (w + 10, 30),
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 0), 2)
+            I_channels = rdn_out  # use denoised channels for subsequent steps
+            rdn_steps = [{
+                "title": "2.5 RDN偏振重建",
+                "image": _rgb_to_b64(rdn_comparison),
+                "description": "左: 结构张量I0 (含噪) | 右: RDN去噪I0 (PSNR 62.46dB)",
+            }]
+
         # Step 2: Stokes parameters (DoLP + AoP as color-mapped images)
         stokes = compute_stokes(I_channels)
         DoLP = stokes["DoLP"]
@@ -180,6 +209,7 @@ class PipelineRunner:
                     "image": _rgb_to_b64(pol_montage),
                     "description": "HSV色彩空间法 → I0/I45/I90/I135 四通道",
                 },
+                *rdn_steps,
                 {
                     "title": "3. Stokes参数",
                     "image": _rgb_to_b64(stokes_montage),

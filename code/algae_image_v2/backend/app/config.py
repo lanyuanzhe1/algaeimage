@@ -29,6 +29,7 @@ BASE_DIR = resource_path("")
 WEIGHTS_DIR = resource_path("weights")
 YOLO_WEIGHTS = resource_path("weights/best_v8l.pt")
 YOLO_WEIGHTS_V8S = resource_path("weights/best_v8s.pt")
+RDN_WEIGHTS = resource_path("weights/rdn_polarization.pth")
 
 DATA_DIR = resource_path("backend/data")
 UPLOAD_DIR = os.path.join(DATA_DIR, "uploads")

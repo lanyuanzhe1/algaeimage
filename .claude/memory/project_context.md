@@ -11,7 +11,7 @@ metadata:
 
 | 目录 | 状态 | 说明 |
 |------|------|------|
-| `code/algae_image_v2/` | **当前产品主线** | V2.0，5类FMPD，HSV偏振，样机演示阶段 |
+| `code/algae_image_v2/` | **当前产品主线** | V2.0，5类FMPD，结构张量+RDN+YOLOv8s，样机演示阶段 |
 | `code/algae_image_v1/` | 稳定备份 | V1.0，95类LifeWatch，结构张量+RDN，论文答辩版 |
 | `code/algae_guardian/` | 研究参考 | 训练/评估/实验 |
 | `code/Polar_sim_0520/` | 算法来源 | 结构张量管线，mAP50 84.7% |
@@ -30,7 +30,8 @@ metadata:
 - 跨页面采集保持、历史页自动轮询、DB 实时写入
 - **性能优化**: run_ndarray() 跳过文件I/O、JPEG替代PNG、批量DB写入
 - **时间戳修复**: UTC+8（SQLite CURRENT_TIMESTAMP → datetime('now','+8 hours')）
-- 有效处理速度 ~1.5-1.8fps（瓶颈在 YOLOv8l GPU 推理+HSV偏振）
+- **2026-06-14 管线升级**: HSV偏振 → 结构张量+RDN+YOLOv8s，mAP50 35.4%→73.9%，GPU 全管线验证通过
+- **速度控制**: `PIPELINE_MAX_WIDTH=1024` 将全分辨率 317s → 3.6s/帧，瓶颈在 RDN（2.3s/3.6s）
 - 后续瓶颈：采集更多数据扩充 FMPD（当前仅293张）
 
 ## 环境

@@ -1,4 +1,4 @@
-- [项目背景](project_context.md) — 藻影卫士项目，当前主线 algae_image_v2，HSV 分支，已全部 git 提交
+- [项目背景](project_context.md) — V2主线 结构张量+RDN+YOLOv8s，mAP50 73.9%，样机演示阶段
 - [用户画像](user_profile.md) — 角色、技术背景、环境、沟通偏好
 - [工作流偏好](feedback_workflow.md) — 验证后完成、一个PR、无emoji、无结尾总结
 - [交互风格](feedback_interaction.md) — 并行优先、bash直接命令、主动解释原理
@@ -8,6 +8,8 @@
 - [保留所有权重](feedback_keep_weights.md) — 失败实验的 .pt/.pth 也有价值，只清理构建产物
 - [Vue3选型决策](vue3-over-streamlit-decision.md) — 竞赛平台选 Vue3 而非 Streamlit 的原因
 - [旧前端XSS](legacy-frontend-xss-known.md) — frontend_legacy/ XSS已知不修，已被Vue3替代
-- [样机演示架构](demo_workflow_architecture.md) — SDK直连、stream_state缓冲、前端轮询、已知bug
+- [样机演示架构](demo_workflow_architecture.md) — 结构张量+RDN管线、五组件架构、视频演示模式、RDN速度剖析、LiveMonitor修复
 - [文档组织规范](document_organization_convention.md) — docs/ 统一 MM-DD_ 前缀命名，按时间线索引
 - [相机Worker性能模式](performance_patterns_camera_worker.md) — 避免磁盘往返、JPEG替代PNG、批量DB写入
+- [Conda Bash路径修复](conda_bash_path_fix.md) — Git Bash 无法 conda activate 的根因与绕过/修复方案
+- [外场实验启动指南](field_startup_guide.md) — 正确启动流程、避坑、相机占用诊断（2026-06-14 验证）

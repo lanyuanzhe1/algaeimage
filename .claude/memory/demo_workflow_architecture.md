@@ -16,11 +16,13 @@ SDK callback → frame queue (threading.Lock)
     → GET /detect/latest (2s polling) → LiveMonitor.vue <img src>
 ```
 
-### 三组件
+### 五组件
 
 - `backend/app/services/camera.py`: CameraController 类，SDK ctypes 回调→numpy→worker 线程。import 前须设 PATH
+- `backend/app/services/video.py`: VideoController 类，cv2 逐帧读取 AVI/MP4 模拟相机输入，无硬件相机时可用
 - `backend/app/services/stream_state.py`: `threading.Lock` 保护，`add_result()` 存 id/filename/image_urls，`get_latest()`/`get_status()` 供轮询
-- `frontend/src/views/LiveMonitor.vue`: 状态机（idle/starting/running/stopping/error），双栏展示，onMounted 检测相机状态自动恢复
+- `backend/app/services/pipeline.py`: PipelineRunner，管线 `结构张量偏振 → RDN(62.46dB) → I_enh v2(α=0.6) → YOLOv8s`，`PIPELINE_MAX_WIDTH=1024` 速度控制
+- `frontend/src/views/LiveMonitor.vue`: el-tabs 双模式（相机采集|视频演示），状态 derived from Pinia store（2026-06-14 修复停止按钮+切Tab状态丢失）
 
 ### 后端端点
 
@@ -30,13 +32,27 @@ SDK callback → frame queue (threading.Lock)
 | `POST /api/v1/detect/stream/stop` | 停止采集 + 清理资源 |
 | `GET /api/v1/detect/latest?n=10` | 最近 N 条（含 raw_image_url + result_image_url） |
 | `GET /api/v1/detect/stream-status` | 采集状态（active/total_frames/effective_fps） |
+| `POST /api/v1/detect/stream/start-video` | 视频文件作为检测源 |
+| `POST /api/v1/detect/stream/stop-video` | 停止视频流 |
+| `GET /api/v1/detect/video-list` | 扫描 video/ 目录返回可用 mp4 |
+| `GET /api/v1/detect/video-status` | 视频流状态 |
 
-### 性能优化（2026-06-13）
+### 速度剖析（2026-06-14）
 
-- `pipeline.run_ndarray(frame)`: 跳过 temp 文件 I/O（省 ~200ms/帧）
-- JPEG quality 90 替代 PNG: 编码快 5-10x，文件小 10-20x（省 ~100ms/帧）
-- 批量 DB 写入（每 10 帧 `executemany`）: 省 sqlite3 connect/commit 开销
-- 预期有效 FPS: 1.5-1.8（原 0.86）
+**RDN 瓶颈**（结构张量+RDN 管线，GPU RTX 4050）：
+
+| 分辨率 | 偏振 | RDN | I_enh | YOLO | 总耗时 | fps |
+|--------|------|-----|-------|------|--------|-----|
+| 2080×1540 | 0.9s | 320s | 0.5s | 1.1s | 322s | 0.003 |
+| 1024×758 | 0.2s | 2.3s | 0.07s | 0.1s | 2.7s | 0.37 |
+| 640×474 | 0.08s | 0.6s | 0.03s | 0.2s | 0.9s | 1.1 |
+
+瓶颈 100% 在 RDN（DenseLayer concat 通道膨胀 16→112）。`PIPELINE_MAX_WIDTH=1024` 作为默认值。
+
+**旧优化（HSV 无 RDN 时代）**:
+- `pipeline.run_ndarray(frame)`: 跳过 temp 文件 I/O
+- JPEG quality 90 替代 PNG
+- 批量 DB 写入（每 10 帧 `executemany`）
 
 ### 时间戳修复
 
@@ -45,10 +61,13 @@ SDK callback → frame queue (threading.Lock)
 
 ### 已知 bug 修复
 
-- ~~**实时监测不刷新**~~: `v-model` + `@change="toggleLiveMode"` 双重触发。修复: 删除 el-switch，改独立路由 /detect/live + Store 管理轮询
-- ~~**切页停止采集**~~: LiveMonitor onUnmounted 停轮询。修复: Store start()/stop() 自动管理轮询，onMounted 恢复状态
-- ~~**历史页不更新**~~: camera worker 只写 stream_state。修复: worker 批量写 history.db
-- ~~**时间戳 UTC+0**~~: CURRENT_TIMESTAMP。修复: 显式 +8 hours
+- ~~**实时监测不刷新**~~: `v-model` + `@change` 双重触发
+- ~~**切页停止采集**~~: Store start()/stop() 管理轮询
+- ~~**切 Tab 状态丢失**~~ (2026-06-14): 组件本地 `state` ref 与 Pinia store `isStreaming` 断开同步。修复: `onMounted` 检查 `store.isStreaming` 恢复状态，`store.stop()` try/catch 保证状态重置
+- ~~**停止按钮无效**~~ (2026-06-14): API 调用失败时 `isStreaming`/`streamMode` 不重置。修复: try/catch 包裹 API，状态重置 always executes
+- frontend vitest 测试覆盖: `detect-store.test.js` (stop lifecycle + interval clear + cross-remount)
+- ~~**历史页不更新**~~
+- ~~**时间戳 UTC+0**~~
 
 ### 关键路径
 

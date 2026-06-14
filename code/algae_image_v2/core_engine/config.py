@@ -55,10 +55,10 @@ AVAILABLE_MODELS: Dict[str, Dict] = {
         "note": "train=val eval, inflated estimate",
     },
 }
-DEFAULT_MODEL: str = "v8l"
+DEFAULT_MODEL: str = "v8s"
 
 # ── Pipeline Toggle ───────────────────────────────────────────────
-SKIP_RDN: bool = True   # HSV deterministic → no denoising needed
+SKIP_RDN: bool = False  # Structure tensor needs RDN denoising
 
 # ── Detection Thresholds ──────────────────────────────────────────
 DEFAULT_CONFIDENCE: float = 0.25
@@ -70,9 +70,9 @@ Q_GOOD: float = 0.7
 Q_FAIR: float = 0.4
 
 # ── I_enh v2 Parameters (tuned for HSV pipeline) ──────────────────
-IENH_ALPHA: float = 0.05
-IENH_BETA: float = 0.20
-IENH_GAMMA: float = 0.30
+IENH_ALPHA: float = 0.6    # was 0.05 — V1 default (matched to YOLOv8s training)
+IENH_BETA: float = 0.25
+IENH_GAMMA: float = 0.35   # was 0.30 — V1 default
 
 
 def get_class_name(class_id: int) -> str:

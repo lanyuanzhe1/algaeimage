@@ -14,7 +14,7 @@ else:
 if _PROJECT_ROOT not in sys.path:
     sys.path.insert(0, _PROJECT_ROOT)
 
-from backend.app.config import DATA_DIR, HOST, PORT, RESULT_DIR, UPLOAD_DIR, resource_path
+from backend.app.config import DATA_DIR, HOST, PORT, RDN_WEIGHTS, RESULT_DIR, UPLOAD_DIR, resource_path
 from backend.app.database import init_db
 
 pipeline_runner = None
@@ -31,10 +31,19 @@ async def lifespan(app: FastAPI):
     device = "cuda" if torch.cuda.is_available() else "cpu"
     print(f"[Startup] Device: {device}")
 
-    # V2: no RDN — load YOLO directly via PipelineRunner factory
+    # V2: Structure Tensor pipeline — load RDN + YOLO
     from backend.app.services.pipeline import PipelineRunner
-    pipeline_runner = PipelineRunner.create(device=device)
-    print(f"[Startup] Pipeline ready — Algae Image V2 (HSV, FMPD 5-class)")
+    from core_engine.reconstructor import load_rdn_model
+
+    rdn_model = None
+    if os.path.exists(RDN_WEIGHTS):
+        rdn_model = load_rdn_model(RDN_WEIGHTS, device)
+        print(f"[Startup] RDN loaded from {RDN_WEIGHTS}")
+    else:
+        print(f"[Startup] RDN weights not found at {RDN_WEIGHTS} — running without RDN")
+
+    pipeline_runner = PipelineRunner.create(device=device, rdn_model=rdn_model)
+    print(f"[Startup] Pipeline ready — Algae Image V2 (StructTensor+RDN, FMPD 5-class)")
 
     # Init camera controller (lazy — won't open device until /stream/start)
     try:
@@ -46,12 +55,23 @@ async def lifespan(app: FastAPI):
         print(f"[Startup] Camera SDK not available (non-Windows or MVS not installed): {e}")
         app.state.camera_controller = None
 
+    # Init video controller (always available — no SDK needed)
+    from backend.app.services.video import video_controller
+    video_controller.configure(pipeline_runner, os.path.join(RESULT_DIR, "live"))
+    app.state.video_controller = video_controller
+    print("[Startup] Video controller ready")
+
     yield
 
     # Shutdown camera if running
     if app.state.camera_controller:
         app.state.camera_controller.finalize()
         print("[Shutdown] Camera controller released")
+
+    # Shutdown video if running
+    if app.state.video_controller and app.state.video_controller.is_active():
+        app.state.video_controller.stop()
+        print("[Shutdown] Video controller released")
 
     pipeline_runner = None
     print("[Shutdown] Models released")

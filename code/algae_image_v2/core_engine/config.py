@@ -57,6 +57,9 @@ AVAILABLE_MODELS: Dict[str, Dict] = {
 }
 DEFAULT_MODEL: str = "v8s"
 
+# ── Pipeline Speed ─────────────────────────────────────────────────
+PIPELINE_MAX_WIDTH: int = 1024  # px; downsample wider images before pipeline (0 = keep original)
+
 # ── Pipeline Toggle ───────────────────────────────────────────────
 SKIP_RDN: bool = False  # Structure tensor needs RDN denoising
 

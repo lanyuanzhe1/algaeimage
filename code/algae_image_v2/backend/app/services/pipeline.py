@@ -9,25 +9,26 @@ from core_engine.reconstructor import reconstruct
 from core_engine.enhancement import enhance, compute_stokes
 from core_engine.inference import detect, load_yolo_by_key
 from core_engine.quality import compute_q_score
-from core_engine.config import get_risk_color, SKIP_RDN, DEFAULT_MODEL, IENH_ALPHA, IENH_BETA, IENH_GAMMA
+from core_engine.config import get_risk_color, SKIP_RDN, DEFAULT_MODEL, IENH_ALPHA, IENH_BETA, IENH_GAMMA, PIPELINE_MAX_WIDTH
 
 
 class PipelineRunner:
     """Holds pre-loaded YOLO model. RDN is optional (skipped by default in V2)."""
 
     def __init__(self, yolo_model, device: str = "cpu", model_key: str = DEFAULT_MODEL,
-                 rdn_model=None):
+                 rdn_model=None, max_width: int = PIPELINE_MAX_WIDTH):
         self.yolo = yolo_model
         self.device = device
         self.model_key = model_key
         self.rdn_model = rdn_model
+        self.max_width = max_width
 
     @classmethod
     def create(cls, model_key: str = DEFAULT_MODEL, device: str = "cpu",
-               rdn_model=None):
+               rdn_model=None, max_width: int = PIPELINE_MAX_WIDTH):
         """Factory: load YOLO by model key from AVAILABLE_MODELS config."""
         yolo = load_yolo_by_key(model_key, device)
-        return cls(yolo, device, model_key, rdn_model)
+        return cls(yolo, device, model_key, rdn_model, max_width)
 
     def run(self, image_path: str) -> dict:
         """Execute V2 HSV pipeline on a single RGB micrograph from a file path.
@@ -48,11 +49,24 @@ class PipelineRunner:
         """
         return self._run_core(rgb)
 
+    def _resize_if_needed(self, rgb: np.ndarray) -> np.ndarray:
+        """Downsample to max_width if wider, preserving aspect ratio."""
+        if not self.max_width or self.max_width <= 0:
+            return rgb
+        h, w = rgb.shape[:2]
+        if w <= self.max_width:
+            return rgb
+        new_h = int(h * self.max_width / w)
+        return cv2.resize(rgb, (self.max_width, new_h), interpolation=cv2.INTER_AREA)
+
     def _run_core(self, rgb: np.ndarray) -> dict:
         """Core pipeline logic shared by run() and run_ndarray()."""
         t0 = time.time()
 
-        # 1. HSV polarization simulation
+        # 0. Downsample for speed (RDN cost ∝ pixel count)
+        rgb = self._resize_if_needed(rgb)
+
+        # 1. Structure tensor polarization simulation
         I_channels = simulate_polarization(rgb)
 
         # 2. RDN reconstruction (structure tensor denoising)
@@ -111,6 +125,8 @@ class PipelineRunner:
         if rgb is None:
             raise ValueError(f"Cannot read image: {image_path}")
         rgb = cv2.cvtColor(rgb, cv2.COLOR_BGR2RGB)
+        rgb_original = rgb  # keep full-res for viz step 1
+        rgb = self._resize_if_needed(rgb)  # downsampled for speed
 
         def _rgb_to_b64(img_rgb: np.ndarray) -> str:
             """Convert RGB ndarray to base64 data-URI PNG."""
@@ -201,8 +217,8 @@ class PipelineRunner:
             "steps": [
                 {
                     "title": "1. RGB原图",
-                    "image": _rgb_to_b64(rgb),
-                    "description": f"明场显微图像 ({w}×{h})",
+                    "image": _rgb_to_b64(rgb_original),
+                    "description": f"明场显微图像 ({rgb_original.shape[1]}×{rgb_original.shape[0]})",
                 },
                 {
                     "title": "2. 偏振模拟",

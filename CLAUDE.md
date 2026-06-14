@@ -33,10 +33,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ### 启动
 
 ```bash
-conda activate ican
 cd e:/code/codex/code/algae_image_v1
 python -m uvicorn backend.app.main:app --host 0.0.0.0 --port 8000
-# 或双击 run.bat (Windows 一键启动: 自动检查权重文件 + conda 环境 + 依赖)
+# 或双击 run.bat
 ```
 
 访问: `http://localhost:8000/docs` (API), `http://localhost:8000/app/` (前端)
@@ -118,12 +117,12 @@ V2 面向 FMPD 5 类明场显微图像，管线更轻（跳过 RDN），已封�
 
 ### 启动
 
-Windows（需要 conda ican + GPU）:
+Windows（需要 GPU + conda ican）:
 ```bash
-conda activate ican
 cd e:/code/codex/code/algae_image_v2
-python desktop_launcher.py          # 自动打开浏览器
-# 或: python -m uvicorn backend.app.main:app --host 0.0.0.0 --port 8000
+# Bash 中 conda activate 无效，用完整 Python 路径:
+"A:/Anaconda_envs/envs/ican/python.exe" desktop_launcher.py
+# 或: "A:/Anaconda_envs/envs/ican/python.exe" -m uvicorn backend.app.main:app --host 0.0.0.0 --port 8000
 # 或: 双击 run.bat
 ```
 
@@ -138,12 +137,13 @@ python -m pytest tests/test_api.py -v        # API 测试不依赖 torch/cv2
 ### 处理管线（不可变更顺序）
 
 ```
-RGB原图 → HSV偏振模拟 → I_enh v2增强 → YOLOv8l检测 → 风险预警(5类FMPD)
+RGB原图 → 结构张量偏振模拟 → RDN偏振重建 → I_enh v2增强 → YOLOv8s检测 → 风险预警(5类FMPD)
 ```
 
-- **跳过 RDN**: V2 默认 `SKIP_RDN=True`（`core_engine/config.py`），HSV 确定性映射无需去噪
+- **结构张量 + RDN 强绑定**: V2 默认 `SKIP_RDN=False`（`core_engine/config.py`），结构张量模拟物理噪声需要 RDN 去噪。RDN PSNR 62.46dB，V1 成熟权重
 - **5 类 FMPD**: Woronichinia / Spiroides / Dinobryon / Other-phytoplankton / Non-phytoplankton
-- **模型切换**: v8l（默认, mAP50 42.9%, 80/20 划分）/ v8s（mAP50 73.9% 虚高）
+- **默认模型**: YOLOv8s（mAP50 73.9%, train=val）/ 备选 v8l（mAP50 49.6%, 80/20 真实划分）
+- **速度控制**: `PIPELINE_MAX_WIDTH=1024`（`core_engine/config.py`），超过此宽度的图片自动缩放，避免 RDN 在全分辨率下计算爆炸（2080px → 317s, 1024px → 3.6s）
 
 ### 架构
 
@@ -171,8 +171,12 @@ Vite dev server 自动代理 `/api` 和 `/static` 到 `127.0.0.1:8000`。
 | `POST /api/v1/detect/visualize` | **单图检测 + 5步管线可视化**（返回 base64 中间结果） |
 | `GET /api/v1/detect/latest?n=10` | **实时轮询** — 最近 N 条检测结果（无 base64） |
 | `GET /api/v1/detect/stream-status` | **采集状态** — active/fps/帧数/运行时间 |
-| `POST /api/v1/detect/stream/start` | **启动采集** — 一键启动相机 SDK 直连 |
+| `POST /api/v1/detect/stream/start?exposure_us=5000` | **启动采集** — 一键启动相机 SDK 直连，可调曝光 (μs) |
 | `POST /api/v1/detect/stream/stop` | **停止采集** — 停止相机并清理资源 |
+| `POST /api/v1/detect/stream/start-video` | **启动视频流** — 用视频文件替代相机作为检测源 |
+| `POST /api/v1/detect/stream/stop-video` | **停止视频流** |
+| `GET /api/v1/detect/video-list` | **视频列表** — 扫描 `video/` 目录返回可用 mp4 |
+| `GET /api/v1/detect/video-status` | **视频流状态** |
 | `GET /api/v1/dashboard/stats` | 仪表板统计 |
 | `GET/ DELETE /api/v1/history` | 检测历史 CRUD |
 
@@ -185,7 +189,7 @@ Vite dev server 自动代理 `/api` 和 `/static` 到 `127.0.0.1:8000`。
 |------|------|------|
 | `/` | 首页 | 管线概览 + 功能卡片 |
 | `/detect` | 手动检测 | 拖拽上传 + 5步管线可视化 + 结果表格 + ECharts 图表 |
-| `/detect/live` | **实时监测** | 一键启动相机 → 双栏实时展示（原始图 + YOLO标注） |
+| `/detect/live` | **实时监测** | 一键启动相机 + 曝光滑块 → 双栏实时展示（原始图 + YOLO标注） |
 | `/history` | 历史记录 | 分页表格 + 3s 自动轮询新记录 |
 | `/dashboard` | 数据统计 | StatsCards + 饼图 + 柱状图 |
 
@@ -251,12 +255,16 @@ python camera_grabber.py --fps 5
 - **关键**: `import` SDK 之前必须 `os.environ["PATH"]` 加入 DLL 目录（`WinDLL` 模块级加载早于 `os.add_dll_directory`）
 - **独占**: SDK 与 MVS 客户端不能同时访问相机（`OpenDevice` 错误码 `0x80000203`）
 - **枚举**: `MV_CC_EnumDevices` → 169.254.82.254（直连 GigE，无 DHCP 时的 link-local 地址）
+- **曝光控制**: `CameraController.start(exposure_us=5000)` 自动设置 `ExposureAuto=Off` + `ExposureTime`（μs）。前端 `el-slider` 范围 100–50000μs（step 100），运行时禁用
 
 ### 已知坑点
 
 - **实时监测不刷新**: `v-model` + `@change="toggleLiveMode"` 双重触发 → 开关来回翻。修复: 去 `@change`，用 `watch(liveMode)` 替代
+- **停止按钮无效**: `store.stop()` API 调用失败时状态不重置 → UI 卡死。修复: try/catch 包裹 API 调用，`isStreaming`/`streamMode` 始终重置
+- **切 Tab 后状态丢失**: `LiveMonitor.vue` 本地 `state` ref 与 store 断开同步，组件重挂载后停止按钮灰掉。修复: `onMounted` 检查 `store.isStreaming` 恢复状态；Pinia store 测试见 `frontend/src/__tests__/detect-store.test.js`
 - **端口残留**: `taskkill` 后端口可能被 `TIME_WAIT` 占用 120s。换端口或用 `SO_REUSEADDR`
 - **history.db 文件锁**: Windows 下 uvicorn 异常退出后文件可能被系统进程锁死。若无法删除，改名绕过
+- **Bash 中 conda 不可用**: Git Bash 无法 `conda activate`，始终用完整路径 `"A:/Anaconda_envs/envs/ican/python.exe"`
 - **SPA fallback**: FastAPI `StaticFiles(html=True)` 不支持子路径。需显式 `@app.get("/app/{full_path:path}")`
 - **npm 不在 bash PATH**: 前端构建需通过 Python `subprocess` 调用，并在 env 中设 `PATH=A:\Program Files\nodejs`
 - **前端构建产物 (dist/) 在 .gitignore 中**: 如需更新生产部署的静态文件，force-add: `git add -f dist/`
@@ -268,13 +276,17 @@ python camera_grabber.py --fps 5
 | `tests/test_api.py` | **无**（macOS 可运行） | 7 个 API 测试，FastAPI TestClient + mock pipeline |
 | `tests/test_pipeline.py` | conda ican + torch/cv2 | 核心引擎集成测试 |
 | `tests/test_frontend.py` | conda ican | 前端 HTML/JS 结构测试（针对旧前端） |
+| `frontend/src/__tests__/detect-store.test.js` | node + vitest | Pinia store 流生命周期测试（停止/轮询/重挂载），6 tests |
 
 ```bash
 python -m pytest tests/test_api.py -v              # macOS/Windows 均可
 python -m pytest tests/test_api.py -v -k "200"     # 单个测试筛选
+cd frontend && npm test                             # vitest 前端单元测试
 cd frontend && npm run dev                          # 前端热重载开发
 cd frontend && npm run build                        # 生产构建 → dist/
 ```
+
+**Vitest 前端测试**: `vitest.config.js`（jsdom + `@vitejs/plugin-vue`），setup 文件 mock `@/api` 避免 axios 在 jsdom 崩溃。运行前需 `cd frontend && npm install`。
 
 ---
 
@@ -283,7 +295,6 @@ cd frontend && npm run build                        # 生产构建 → dist/
 ### 启动
 
 ```bash
-conda activate ican
 cd e:/code/codex/code/algae_guardian
 python run.py                # 初始化数据库 + 加载模型
 uvicorn backend.app.main:app --host 0.0.0.0 --port 8000 --reload
@@ -375,7 +386,7 @@ HSV 色彩空间偏振模拟，性能远低于结构张量。但保留了**完�
 
 ## 五、云训练监控
 
-`.claude/scheduled_tasks.json` 配置了每小时第 17 分钟执行的监控任务，SSH 连接到云 GPU 服务器检查两组 YOLO 训练状态 (v8l_hsv_95 全量 + v8l_hsv_stable 半数)，报告 epoch/mAP/NaN/GPU 状态。
+云训练监控任务已移除（`scheduled_tasks.json` 当前为空）。如需恢复，使用 `CronCreate` 工具重新配置。
 
 ---
 

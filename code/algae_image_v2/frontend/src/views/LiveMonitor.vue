@@ -1,16 +1,89 @@
 <template>
   <div class="live-monitor" style="max-width:1200px; margin:0 auto">
-    <!-- Control bar -->
-    <div class="control-bar">
+    <!-- Source tabs -->
+    <el-tabs v-model="activeTab" style="margin-bottom:0" @tab-change="onTabChange">
+      <el-tab-pane label="相机采集" name="camera" :disabled="state === 'running'" />
+      <el-tab-pane label="视频演示" name="video" :disabled="state === 'running'" />
+    </el-tabs>
+
+    <!-- Camera control bar -->
+    <div v-if="activeTab === 'camera'" class="control-bar">
+      <div class="exposure-group">
+        <span class="exposure-label">曝光 {{ store.exposureUs }}μs</span>
+        <el-slider
+          v-model="store.exposureUs"
+          :min="100"
+          :max="50000"
+          :step="100"
+          :disabled="state === 'running'"
+          style="width:160px"
+        />
+      </div>
       <el-button
         type="primary"
         size="large"
         :loading="state === 'starting'"
         :disabled="state === 'running'"
-        @click="handleStart"
+        @click="handleStartCamera"
       >
         <el-icon><VideoPlay /></el-icon>
         开始采集
+      </el-button>
+      <el-button
+        type="danger"
+        size="large"
+        :loading="state === 'stopping'"
+        :disabled="state !== 'running'"
+        @click="handleStop"
+      >
+        <el-icon><VideoPause /></el-icon>
+        停止
+      </el-button>
+      <span class="stream-indicator" :class="state">
+        <span class="dot"></span>
+        {{ stateText }}
+      </span>
+      <span v-if="store.streamStatus.total_frames" class="stream-stats">
+        {{ store.streamStatus.total_frames }}帧
+        {{ store.streamStatus.effective_fps?.toFixed(1) }}fps
+      </span>
+    </div>
+
+    <!-- Video control bar -->
+    <div v-if="activeTab === 'video'" class="control-bar">
+      <span class="param-label">视频文件</span>
+      <el-select
+        v-model="store.videoPath"
+        :disabled="state === 'running'"
+        style="width:280px"
+      >
+        <el-option
+          v-for="v in store.videoOptions"
+          :key="v.path"
+          :label="v.label"
+          :value="v.path"
+        />
+      </el-select>
+      <span class="param-label">FPS</span>
+      <el-input-number
+        v-model="store.videoFps"
+        :min="1" :max="60" :step="1"
+        :disabled="state === 'running'"
+        size="small"
+        style="width:80px"
+      />
+      <el-checkbox v-model="store.videoLoop" :disabled="state === 'running'">
+        循环
+      </el-checkbox>
+      <el-button
+        type="success"
+        size="large"
+        :loading="state === 'starting'"
+        :disabled="state === 'running'"
+        @click="handleStartVideo"
+      >
+        <el-icon><VideoPlay /></el-icon>
+        视频演示
       </el-button>
       <el-button
         type="danger"
@@ -84,15 +157,16 @@
 </template>
 
 <script setup>
-import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useDetectStore } from '@/stores/detect'
 import StatsCards from '@/components/StatsCards.vue'
 import ResultTable from '@/components/ResultTable.vue'
 
 const store = useDetectStore()
 
-// State machine: idle | starting | running | stopping | error
-const state = ref('idle')
+// UI state
+const activeTab = ref('camera')
+const state = ref('idle')  // idle | starting | running | stopping | error
 const errorMsg = ref(null)
 
 // Computed
@@ -105,9 +179,11 @@ const stateText = computed(() => ({
 })[state.value])
 
 const placeholderText = computed(() => {
-  if (state.value === 'idle') return '点击「开始采集」启动'
-  if (state.value === 'starting') return '正在启动相机...'
-  if (state.value === 'error') return errorMsg.value || '采集异常'
+  if (state.value === 'idle') {
+    return activeTab.value === 'video' ? '点击「视频演示」启动' : '点击「开始采集」启动'
+  }
+  if (state.value === 'starting') return '正在启动...'
+  if (state.value === 'error') return errorMsg.value || '异常'
   return '等待图像...'
 })
 
@@ -136,8 +212,14 @@ const statsCards = computed(() => {
   ]
 })
 
-// Actions
-async function handleStart() {
+// Prevent tab switch while running
+function onTabChange() {
+  // tab-switch is natively disabled when running, nothing extra needed
+}
+
+// ── Camera ─────────────────────────────────────────────────
+
+async function handleStartCamera() {
   state.value = 'starting'
   errorMsg.value = null
   try {
@@ -154,6 +236,27 @@ async function handleStart() {
   }
 }
 
+// ── Video ──────────────────────────────────────────────────
+
+async function handleStartVideo() {
+  state.value = 'starting'
+  errorMsg.value = null
+  try {
+    const res = await store.startVideo()
+    if (res.status === 'started') {
+      state.value = 'running'
+    } else {
+      state.value = 'error'
+      errorMsg.value = res.detail || '启动失败'
+    }
+  } catch (e) {
+    state.value = 'error'
+    errorMsg.value = e.response?.data?.detail || '视频启动失败'
+  }
+}
+
+// ── Stop ───────────────────────────────────────────────────
+
 async function handleStop() {
   state.value = 'stopping'
   try {
@@ -164,24 +267,19 @@ async function handleStop() {
   state.value = 'idle'
 }
 
-// Sync state on mount — if camera is already running, resume display
+// ── Lifecycle ──────────────────────────────────────────────
+
 onMounted(async () => {
-  // Check stream status to detect if camera is already active
-  try {
-    const { getStreamStatus } = await import('@/api')
-    const res = await getStreamStatus()
-    if (res.data.active) {
-      state.value = 'running'
-    }
-  } catch (_e) { /* backend may not be ready */ }
-  // If we're streaming, ensure polling is active
+  await store.fetchVideoList()
+  // Sync with potentially running stream from before tab switch
   if (store.isStreaming) {
-    store.startStreamPolling()
+    state.value = 'running'
+    activeTab.value = store.streamMode || 'camera'
   }
 })
 
 onUnmounted(() => {
-  // Don't stop polling — camera runs globally. Only stop if user clicked Stop.
+  // Don't stop the stream — it runs globally across pages
 })
 </script>
 
@@ -193,8 +291,14 @@ onUnmounted(() => {
   margin-bottom: 16px;
   padding: 12px 16px;
   background: white;
-  border-radius: 8px;
+  border-radius: 0 8px 8px 8px;
   box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+  flex-wrap: wrap;
+}
+.param-label {
+  font-size: 13px;
+  color: #606266;
+  white-space: nowrap;
 }
 .stream-indicator {
   display: flex;
@@ -252,5 +356,17 @@ onUnmounted(() => {
 .placeholder p {
   margin-top: 8px;
   font-size: 13px;
+}
+.exposure-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-right: 8px;
+}
+.exposure-label {
+  font-size: 13px;
+  color: #606266;
+  white-space: nowrap;
+  min-width: 80px;
 }
 </style>

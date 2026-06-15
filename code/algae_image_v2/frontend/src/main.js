@@ -7,7 +7,7 @@ import * as ElementPlusIconsVue from '@element-plus/icons-vue'
 // ECharts 5.x tree-shakable — must register renderer + chart types + components.
 import { use } from 'echarts/core'
 import { CanvasRenderer } from 'echarts/renderers'
-import { PieChart, BarChart } from 'echarts/charts'
+import { PieChart, BarChart, LineChart } from 'echarts/charts'
 import {
   GridComponent,
   TooltipComponent,
@@ -19,6 +19,7 @@ use([
   CanvasRenderer,
   PieChart,
   BarChart,
+  LineChart,
   GridComponent,
   TooltipComponent,
   LegendComponent,

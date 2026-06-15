@@ -271,7 +271,8 @@ async function handleStop() {
 
 onMounted(async () => {
   await store.fetchVideoList()
-  // Sync with potentially running stream from before tab switch
+  // Detect if stream is already running (e.g. page refresh while video playing)
+  await store.checkLiveStatus()
   if (store.isStreaming) {
     state.value = 'running'
     activeTab.value = store.streamMode || 'camera'

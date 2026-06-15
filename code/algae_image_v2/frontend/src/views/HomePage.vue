@@ -440,7 +440,7 @@ function refreshDemoData() {
   border-radius: 8px; box-shadow: inset 0 0 18px rgba(25,118,210,.16);
   color: var(--blue); font-weight: 800; font-size: 20px;
 }
-.brand h1 { margin: 0; font-size: clamp(22px, 2vw, 30px); line-height: 1.1; }
+.brand h1 { margin: 0; font-size: clamp(22px, 2vw, 30px); line-height: 1.1; color: #000; }
 .subtitle { margin: 5px 0 0; color: var(--muted); font-size: 13px; }
 .subtitle strong { color: var(--blue); font-weight: 600; }
 .top-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }

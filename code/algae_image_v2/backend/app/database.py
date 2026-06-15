@@ -32,6 +32,33 @@ async def init_db():
                 created_at TEXT DEFAULT (datetime('now','+8 hours'))
             )
         """)
+        await db.execute("""
+            CREATE TABLE IF NOT EXISTS devices (
+                id TEXT PRIMARY KEY,
+                name TEXT NOT NULL,
+                location TEXT NOT NULL,
+                model TEXT NOT NULL DEFAULT 'MV-CA013-20GC',
+                status TEXT NOT NULL DEFAULT 'offline',
+                today_frames INTEGER DEFAULT 0,
+                alerts INTEGER DEFAULT 0,
+                uptime TEXT DEFAULT '--',
+                created_at TEXT DEFAULT (datetime('now','+8 hours'))
+            )
+        """)
+        await db.execute("""
+            CREATE TABLE IF NOT EXISTS reviewed_records (
+                id TEXT PRIMARY KEY,
+                detection_id TEXT NOT NULL,
+                filename TEXT NOT NULL,
+                class_name TEXT NOT NULL,
+                class_name_zh TEXT DEFAULT '',
+                confidence REAL DEFAULT 0,
+                risk_level TEXT,
+                status TEXT NOT NULL DEFAULT 'pending',
+                corrected_class TEXT,
+                created_at TEXT DEFAULT (datetime('now','+8 hours'))
+            )
+        """)
         await db.commit()
 
 

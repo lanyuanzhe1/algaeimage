@@ -121,3 +121,53 @@ class StreamStatusResponse(BaseModel):
     buffer_size: int
     elapsed_seconds: float
     effective_fps: float
+
+
+# ══════════════════════════════════════════════════════════════════
+# Device Management
+# ══════════════════════════════════════════════════════════════════
+
+class DeviceInfo(BaseModel):
+    """单个设备信息"""
+    id: str
+    name: str
+    location: str
+    model: str
+    status: str  # "online" | "offline"
+    today_frames: int
+    alerts: int
+    uptime: str
+
+class DeviceListResponse(BaseModel):
+    """GET /api/v1/devices 响应"""
+    devices: list[DeviceInfo]
+
+
+# ══════════════════════════════════════════════════════════════════
+# Review
+# ══════════════════════════════════════════════════════════════════
+
+class ReviewItem(BaseModel):
+    """单条复核记录"""
+    id: str
+    detection_id: str
+    filename: str
+    class_name: str
+    class_name_zh: str
+    confidence: float
+    risk_level: Optional[str] = None
+    status: str  # "pending" | "approved" | "rejected"
+    created_at: str
+
+class ReviewListResponse(BaseModel):
+    """GET /api/v1/review/list 响应"""
+    items: list[ReviewItem]
+    total: int
+    approved_count: int
+    pending_count: int
+
+class ReviewSubmitRequest(BaseModel):
+    """POST /api/v1/review/submit 请求"""
+    detection_id: str
+    status: str  # "approved" | "rejected"
+    corrected_class: Optional[str] = None

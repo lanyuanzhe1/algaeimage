@@ -263,7 +263,7 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
-import { detectVisualize, getStats } from '@/api'
+import { detectVisualize, getStats, getDevices } from '@/api'
 import PipelineViz from '@/components/PipelineViz.vue'
 import ResultTable from '@/components/ResultTable.vue'
 
@@ -350,12 +350,30 @@ const loopItems = ref([
   { id: 3, filename: 'SNAP-003217-0089.tif' },
 ])
 
+// ─── Device Management (real API + demo fallback) ──────────────────
+async function fetchDevices() {
+  try {
+    const res = await getDevices()
+    const list = res.data.devices || []
+    if (list.length) {
+      sites.value = list.map(d => ({
+        id: d.id, name: d.name, scene: d.location, location: d.model,
+        risk: d.alerts > 0 ? (d.alerts > 5 ? 'orange' : 'yellow') : 'green',
+        count: d.today_frames, confidence: 89, sample: 0,
+        trendDir: 'flat', status: d.status,
+        ops: { 相机模组: d.status === 'online' ? 96 : 0, 光源: 91, 网络: 88, 供电: 82, 窗口清洁: 72 },
+        species: [['检测中', 0, '--', 0, 'green']],
+      }))
+    }
+  } catch (_) { /* keep demo data */ }
+}
+
 // ─── Stats / Detection ────────────────────────────────────────────
 const statsData = ref({})
 async function fetchStats() {
   try { const res = await getStats(); statsData.value = res.data } catch (_) {}
 }
-onMounted(fetchStats)
+onMounted(() => { fetchStats(); fetchDevices() })
 
 const selectedFile = ref(null)
 const fileList = ref([])

@@ -90,6 +90,7 @@ class CameraController:
         self._worker_thread = None
         self._total_frames = 0
         self._start_time: float = 0.0
+        self._exposure_us: float = 5000.0  # default 5ms, 可调
 
         # Frame queue (callback → worker)
         self._frame_queue: list[np.ndarray] = []
@@ -401,13 +402,15 @@ class CameraController:
 
     # ── Lifecycle ────────────────────────────────────────────────
 
-    def start(self) -> dict:
+    def start(self, exposure_us: float = 5000.0) -> dict:
         """Open device, register callback, start grabbing, spawn worker thread.
 
+        exposure_us: exposure time in microseconds (default 5ms).
         Returns:
             {"status": "started"} on success,
             {"status": "error", "detail": "..."} on failure.
         """
+        self._exposure_us = exposure_us
         if not _sdk_available:
             return {"status": "error", "detail": "MVS SDK not available"}
 
@@ -446,6 +449,10 @@ class CameraController:
                 self._cam.MV_CC_SetIntValue("GevSCPSPacketSize", pkt)
 
         self._cam.MV_CC_SetEnumValue("TriggerMode", MV_TRIGGER_MODE_OFF)
+
+        # Exposure: disable auto, set manual (unit: microseconds)
+        self._cam.MV_CC_SetEnumValue("ExposureAuto", 0)  # 0=Off
+        self._cam.MV_CC_SetFloatValue("ExposureTime", self._exposure_us)
 
         # Register callback
         self._make_callback()

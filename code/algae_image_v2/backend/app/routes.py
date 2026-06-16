@@ -18,6 +18,7 @@ from .config import UPLOAD_DIR, RESULT_DIR
 from .database import get_db
 from .services.stream_state import stream_state
 from .services.camera import camera_controller
+from .services.video import video_controller
 from .schemas import (
     BatchDetectResponse,
     BatchResult,
@@ -320,11 +321,11 @@ async def get_stream_status():
 
 
 @router.post("/detect/stream/start")
-async def stream_start():
-    """Start live camera acquisition."""
+async def stream_start(exposure_us: float = 5000):
+    """Start live camera acquisition. exposure_us in microseconds (default 5ms)."""
     if camera_controller is None:
         raise HTTPException(status_code=503, detail="Camera SDK not available on this system")
-    result = camera_controller.start()
+    result = camera_controller.start(exposure_us=exposure_us)
     if result.get("status") == "error":
         raise HTTPException(status_code=400, detail=result.get("detail", "Unknown error"))
     return result
@@ -336,4 +337,93 @@ async def stream_stop():
     if camera_controller is None:
         raise HTTPException(status_code=503, detail="Camera SDK not available")
     return camera_controller.stop()
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# Video stream (demo mode — replaces camera with video file)
+# ═══════════════════════════════════════════════════════════════════════
+
+def _resolve_video_path(repo_root: str, video_path: str) -> str:
+    """Resolve video path, handling UTF-8/GBK encoding mismatch on Windows.
+
+    The frontend sends UTF-8 Chinese filenames via HTTP, but Windows uses GBK
+    for filesystem encoding. We match by numeric prefix (e.g. "5_") to avoid
+    the encoding mismatch entirely.
+    """
+    import glob as _glob
+    candidate = os.path.normpath(os.path.join(repo_root, video_path))
+    if os.path.isfile(candidate):
+        return candidate
+
+    # Encoding mismatch — try matching by prefix number
+    video_dir = os.path.join(repo_root, "video")
+    basename = os.path.basename(video_path)
+    # Extract numeric prefix: "5_较好的.mp4" → "5_"
+    prefix = basename.split("_")[0] + "_" if "_" in basename else basename[:4]
+    pattern = os.path.join(video_dir, prefix + "*")
+    matches = _glob.glob(pattern)
+    if matches:
+        return matches[0]
+
+    # Last resort: return the candidate so the error message is clear
+    return candidate
+
+@router.post("/detect/stream/start-video")
+async def stream_start_video(
+    video_path: str = Query(..., description="Path to video file (relative to project root or absolute)"),
+    fps: float = Query(10.0, description="Target frames/sec to process"),
+    loop: bool = Query(False, description="Loop video continuously"),
+):
+    """Start video file as detection source (demo mode, no camera required)."""
+    # Resolve relative paths against repo root (one level above project root)
+    if not os.path.isabs(video_path):
+        from backend.app.config import resource_path
+        repo_root = os.path.dirname(os.path.dirname(os.path.dirname(resource_path(""))))
+        video_path = _resolve_video_path(repo_root, video_path)
+
+    # Path traversal guard: resolved path must stay within video/ directory
+    video_dir = os.path.realpath(os.path.join(
+        os.path.dirname(os.path.dirname(os.path.dirname(resource_path("")))), "video"))
+    real_path = os.path.realpath(video_path)
+    if not real_path.startswith(video_dir + os.sep):
+        raise HTTPException(status_code=400, detail="Invalid video path.")
+
+    result = video_controller.start(video_path=real_path, fps=fps, loop=loop)
+    if result.get("status") == "error":
+        raise HTTPException(status_code=400, detail=result.get("detail", "Unknown error"))
+    return result
+
+
+@router.post("/detect/stream/stop-video")
+async def stream_stop_video():
+    """Stop video stream."""
+    return video_controller.stop()
+
+
+@router.get("/detect/video-list")
+async def get_video_list():
+    """Return list of available video files in video/ directory."""
+    from backend.app.config import resource_path
+    import glob as _glob
+    repo_root = os.path.dirname(os.path.dirname(os.path.dirname(resource_path(""))))
+    video_dir = os.path.join(repo_root, "video")
+    if not os.path.isdir(video_dir):
+        return {"videos": []}
+    videos = []
+    for f in sorted(_glob.glob(os.path.join(video_dir, "*.mp4"))):
+        basename = os.path.basename(f)
+        size = os.path.getsize(f)
+        videos.append({
+            "path": f"video/{basename}",
+            "name": basename,
+            "size_bytes": size,
+            "size_mb": round(size / 1_000_000, 1),
+        })
+    return {"videos": videos, "directory": video_dir}
+
+
+@router.get("/detect/video-status")
+async def get_video_status():
+    """Return video stream status."""
+    return video_controller.get_status()
 

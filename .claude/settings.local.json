@@ -86,10 +86,22 @@
       "Bash(ls -d docs/adr/)",
       "Bash(ls -d docs/agents/)",
       "Bash(bash \"C:\\\\Users\\\\HP\\\\.claude\\\\plugins\\\\cache\\\\claude-plugins-official\\\\superpowers\\\\5.1.0\\\\skills\\\\brainstorming\\\\scripts\\\\start-server.sh\" --project-dir e:/code/codex)",
-      "mcp__plugin_playwright_playwright__browser_navigate"
+      "mcp__plugin_playwright_playwright__browser_navigate",
+      "Bash(where.exe claude *)",
+      "Bash(where.exe claude-code *)",
+      "Read(//c/Program Files/**)",
+      "Read(//c/Program Files \\(x86\\)/**)",
+      "Bash(pwsh.exe -Command 'Get-Process | Where-Object { $_.ProcessName -like '\\\\''*claude*'\\\\'' } | Format-Table Name, Id, Path -AutoSize')",
+      "Bash(powershell.exe -Command 'Get-Process | Where-Object { $_.ProcessName -like '\\\\''*claude*'\\\\'' } | Format-Table Name, Id, Path -AutoSize')",
+      "Bash(reg query *)",
+      "Bash(claude-code --help)",
+      "Bash(bash -c 'python3 --version 2>&1; python --version 2>&1')",
+      "Read(//c/Users/HP/**)",
+      "Bash(/a/Anaconda_envs/envs/ican/conda init *)"
     ],
     "additionalDirectories": [
       "\\tmp"
     ]
-  }
+  },
+  "prefersReducedMotion": true
 }

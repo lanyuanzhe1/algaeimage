@@ -13,3 +13,8 @@
 - [相机Worker性能模式](performance_patterns_camera_worker.md) — 避免磁盘往返、JPEG替代PNG、批量DB写入
 - [Conda Bash路径修复](conda_bash_path_fix.md) — Git Bash 无法 conda activate 的根因与绕过/修复方案
 - [外场实验启动指南](field_startup_guide.md) — 正确启动流程、避坑、相机占用诊断（2026-06-14 验证）
+- [WebFetch 绕过方案](webfetch-bypass-pattern.md) — WebFetch 域名白名单拦截时，自动切 Python urllib 本地请求（用户级）
+- [RDN 参数-计算悖论](rdn-parameter-compute-paradox.md) — 0.61M 参数 → 865 GMACs，参数少不等于计算少
+- [84.7% 是分类不是检测](lifewatch-84percent-is-classification.md) — LifeWatch 全图单框标注，mAP50 ≈ 分类精度
+- [I_enh 双公式](ienh-formulas-v1-v2.md) — v1(加法/训练) vs v2(减法/V2产线)，需注意区分
+- [三通道融合无增益](three-channel-fusion-negligible.md) — S0+I_enh+corrected vs I_enh×3 差异可忽略，不改 V2

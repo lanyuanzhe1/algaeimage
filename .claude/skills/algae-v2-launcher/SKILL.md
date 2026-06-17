@@ -11,7 +11,8 @@ Control the V2 product lifecycle — start, stop, or restart the FastAPI backend
 
 - **Project root**: `e:/code/codex/code/algae_image_v2`
 - **Python**: `"A:/Anaconda_envs/envs/ican/python.exe"` (conda `ican`, must use full path — `conda activate` does not work in Git Bash)
-- **Entry point**: `desktop_launcher.py` — launches uvicorn on `http://127.0.0.1:8000` and auto-opens browser to `/app/`
+- **Entry point**: `desktop_launcher.py` — launches uvicorn on `http://127.0.0.1:8000`
+- **Browser**: Firefox — `"C:/Program Files/Mozilla Firefox/firefox.exe"`
 - **Frontend URL**: `http://127.0.0.1:8000/app/`
 - **API docs**: `http://127.0.0.1:8000/docs`
 - **Port**: 8000
@@ -29,7 +30,12 @@ Control the V2 product lifecycle — start, stop, or restart the FastAPI backend
    ```
    Use `run_in_background: true` with a 10s timeout.
 4. Wait 5 seconds, then check the output file for startup success. Look for `"Application startup complete"` and `"Uvicorn running on"`.
-5. Report to the user: server state, URLs, and which browser was opened (Firefox on Windows).
+5. Once the server is confirmed running, open Firefox explicitly:
+   ```bash
+   "C:/Program Files/Mozilla Firefox/firefox.exe" "http://127.0.0.1:8000/app/" &
+   ```
+   Do NOT rely on `desktop_launcher.py`'s auto-open — it may use the wrong browser.
+6. Report to the user: server state, URLs, and that Firefox has been opened.
 
 ## Stop
 

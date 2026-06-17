@@ -36,10 +36,18 @@ from shared.schemas import (  # noqa: E402
     BatchResult,
     BatchSummary,
     DetectionItem,
+    DeviceInfo,
+    DeviceListResponse,
     HistoryItem,
     HistoryListResponse,
+    LatestResult,
+    LatestResultsResponse,
+    ReviewItem,
+    ReviewListResponse,
+    ReviewSubmitRequest,
     SingleDetectResponse,
     StatsResponse,
+    StreamStatusResponse,
     VizDetectResponse,
     VizStep,
 )
@@ -101,7 +109,44 @@ async def init_db():
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         """)
+        await db.execute("""
+            CREATE TABLE IF NOT EXISTS devices (
+                id TEXT PRIMARY KEY,
+                name TEXT NOT NULL,
+                location TEXT NOT NULL DEFAULT '',
+                model TEXT NOT NULL DEFAULT 'MV-CA013-20GC',
+                status TEXT NOT NULL DEFAULT 'offline',
+                today_frames INTEGER NOT NULL DEFAULT 0,
+                alerts INTEGER NOT NULL DEFAULT 0,
+                uptime TEXT NOT NULL DEFAULT '0h',
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+        await db.execute("""
+            CREATE TABLE IF NOT EXISTS reviews (
+                id TEXT PRIMARY KEY,
+                detection_id TEXT NOT NULL,
+                filename TEXT NOT NULL DEFAULT '',
+                class_name TEXT NOT NULL DEFAULT '',
+                class_name_zh TEXT NOT NULL DEFAULT '',
+                confidence REAL NOT NULL DEFAULT 0.0,
+                risk_level TEXT DEFAULT 'low',
+                status TEXT NOT NULL DEFAULT 'pending',
+                corrected_class TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
         await db.commit()
+        # 首次初始化时插入默认设备
+        db.row_factory = aiosqlite.Row
+        row = await db.execute_fetchall("SELECT COUNT(*) as c FROM devices")
+        if row[0]["c"] == 0:
+            import uuid as _uuid
+            await db.execute(
+                "INSERT INTO devices (id, name, location, model, status, today_frames, alerts, uptime) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+                (_uuid.uuid4().hex, "海康 MV-CA013-20GC", "实验室 A区", "MV-CA013-20GC", "online", 0, 0, "0h"),
+            )
+            await db.commit()
 
 async def get_db() -> aiosqlite.Connection:
     db = await aiosqlite.connect(DB_PATH)
@@ -492,6 +537,220 @@ async def delete_history(record_id: str):
     finally:
         await conn.close()
     return {"status": "deleted", "id": record_id}
+
+
+# ── Stream / Latest ───────────────────────────────────────
+
+_stream_state = {
+    "active": False,
+    "total_frames": 0,
+    "started_at": None,
+}
+
+
+@router.get("/detect/latest", response_model=LatestResultsResponse)
+async def get_latest(n: int = Query(10, ge=1, le=100)):
+    """最近 N 条检测结果（轻量，无 base64，供前端轮询）"""
+    conn = await get_db()
+    try:
+        rows = await conn.execute_fetchall(
+            "SELECT id, filename, detections, q_score, risk_level, created_at "
+            "FROM detection_history ORDER BY created_at DESC LIMIT ?",
+            (n,),
+        )
+        results = []
+        for r in rows:
+            dets = json.loads(r["detections"])
+            results.append(LatestResult(
+                id=r["id"], filename=r["filename"],
+                detections=[DetectionItem(**d) for d in dets],
+                q_score=r["q_score"], risk_level=r["risk_level"],
+                processing_time_ms=0.0,
+                raw_image_url=None, result_image_url=f"/static/results/{r['id']}.png",
+            ))
+    finally:
+        await conn.close()
+    return LatestResultsResponse(results=results, count=len(results))
+
+
+@router.get("/detect/stream-status", response_model=StreamStatusResponse)
+async def stream_status():
+    """采集状态（演示模式始终为 inactive）"""
+    return StreamStatusResponse(
+        active=_stream_state["active"],
+        total_frames=_stream_state["total_frames"],
+        buffer_size=0,
+        elapsed_seconds=0.0,
+        effective_fps=0.0,
+    )
+
+
+# ── Video (demo) ──────────────────────────────────────────
+
+@router.get("/detect/video-list")
+async def video_list():
+    """扫描 video/ 目录返回可用 mp4（演示模式返回空）"""
+    video_dir = os.path.join(BASE_DIR, "video")
+    videos = []
+    if os.path.isdir(video_dir):
+        for f in sorted(os.listdir(video_dir)):
+            if f.lower().endswith((".mp4", ".avi", ".mov")):
+                videos.append({"name": f, "path": os.path.join(video_dir, f)})
+    return {"videos": videos}
+
+
+@router.get("/detect/video-status")
+async def video_status():
+    return {"active": False, "video_path": None, "fps": 0, "current_frame": 0, "total_frames": 0}
+
+
+@router.post("/detect/stream/start")
+async def stream_start(exposure_us: int = Query(5000)):
+    """演示模式不支持相机启动"""
+    raise HTTPException(status_code=400, detail="演示服务器不支持相机直连，请在本地运行")
+
+
+@router.post("/detect/stream/stop")
+async def stream_stop():
+    _stream_state["active"] = False
+    return {"status": "stopped"}
+
+
+@router.post("/detect/stream/start-video")
+async def stream_start_video(video_path: str = Query(...), fps: int = Query(10), loop: bool = Query(False)):
+    raise HTTPException(status_code=400, detail="演示服务器不支持视频流，请在本地运行")
+
+
+@router.post("/detect/stream/stop-video")
+async def stream_stop_video():
+    return {"status": "stopped"}
+
+
+# ── Device Management ─────────────────────────────────────
+
+@router.get("/devices", response_model=DeviceListResponse)
+async def list_devices():
+    conn = await get_db()
+    try:
+        rows = await conn.execute_fetchall("SELECT * FROM devices ORDER BY created_at DESC")
+        devices = [
+            DeviceInfo(id=r["id"], name=r["name"], location=r["location"], model=r["model"],
+                       status=r["status"], today_frames=r["today_frames"], alerts=r["alerts"], uptime=r["uptime"])
+            for r in rows
+        ]
+    finally:
+        await conn.close()
+    return DeviceListResponse(devices=devices)
+
+
+@router.post("/devices")
+async def add_device(name: str = Query(...), location: str = Query(""), model: str = Query("MV-CA013-20GC")):
+    conn = await get_db()
+    try:
+        dev_id = uuid.uuid4().hex
+        await conn.execute(
+            "INSERT INTO devices (id, name, location, model, status, today_frames, alerts, uptime) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+            (dev_id, name, location, model, "offline", 0, 0, "0h"),
+        )
+        await conn.commit()
+    finally:
+        await conn.close()
+    return {"id": dev_id, "name": name, "status": "created"}
+
+
+@router.put("/devices/{device_id}")
+async def update_device(device_id: str, name: str = Query(None), location: str = Query(None),
+                        model: str = Query(None), status: str = Query(None)):
+    conn = await get_db()
+    try:
+        sets = []
+        vals = []
+        for k, v in [("name", name), ("location", location), ("model", model), ("status", status)]:
+            if v is not None:
+                sets.append(f"{k} = ?")
+                vals.append(v)
+        if not sets:
+            raise HTTPException(status_code=400, detail="无更新字段")
+        vals.append(device_id)
+        await conn.execute(f"UPDATE devices SET {', '.join(sets)} WHERE id = ?", vals)
+        await conn.commit()
+    finally:
+        await conn.close()
+    return {"id": device_id, "status": "updated"}
+
+
+@router.delete("/devices/{device_id}")
+async def delete_device(device_id: str):
+    conn = await get_db()
+    try:
+        row = await conn.execute_fetchall("SELECT id FROM devices WHERE id = ?", (device_id,))
+        if not row:
+            raise HTTPException(status_code=404, detail="设备不存在")
+        await conn.execute("DELETE FROM devices WHERE id = ?", (device_id,))
+        await conn.commit()
+    finally:
+        await conn.close()
+    return {"status": "deleted", "id": device_id}
+
+
+# ── Review ────────────────────────────────────────────────
+
+@router.get("/review/list", response_model=ReviewListResponse)
+async def list_reviews(status: str = Query(None)):
+    conn = await get_db()
+    try:
+        where = "WHERE status = ?" if status else ""
+        params = (status,) if status else ()
+        rows = await conn.execute_fetchall(
+            f"SELECT * FROM reviews {where} ORDER BY created_at DESC LIMIT 200", params
+        )
+        items = [
+            ReviewItem(id=r["id"], detection_id=r["detection_id"], filename=r["filename"],
+                       class_name=r["class_name"], class_name_zh=r["class_name_zh"],
+                       confidence=round(r["confidence"], 4), risk_level=r["risk_level"],
+                       status=r["status"], created_at=str(r["created_at"]))
+            for r in rows
+        ]
+        # 统计
+        all_rows = await conn.execute_fetchall("SELECT status FROM reviews")
+        approved = sum(1 for r in all_rows if r["status"] == "approved")
+        pending = sum(1 for r in all_rows if r["status"] == "pending")
+    finally:
+        await conn.close()
+    return ReviewListResponse(items=items, total=len(items), approved_count=approved, pending_count=pending)
+
+
+@router.post("/review/submit")
+async def submit_review(body: ReviewSubmitRequest):
+    conn = await get_db()
+    try:
+        row = await conn.execute_fetchall("SELECT * FROM detection_history WHERE id = ?", (body.detection_id,))
+        if not row:
+            raise HTTPException(status_code=404, detail="检测记录不存在")
+        r = row[0]
+        dets = json.loads(r["detections"]) if r["detections"] else []
+        # 取第一个检测结果的类名
+        cls_name = dets[0].get("class_name", "") if dets else ""
+        cls_zh = dets[0].get("class_name_zh", "") if dets else ""
+        conf = dets[0].get("confidence", 0.0) if dets else 0.0
+        risk = dets[0].get("risk_level", "low") if dets else "low"
+
+        review_id = uuid.uuid4().hex
+        await conn.execute(
+            "INSERT INTO reviews (id, detection_id, filename, class_name, class_name_zh, confidence, risk_level, status, corrected_class) "
+            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            (review_id, body.detection_id, r["filename"], cls_name, cls_zh, conf, risk, body.status, body.corrected_class),
+        )
+        await conn.commit()
+    finally:
+        await conn.close()
+    return {"id": review_id, "status": body.status}
+
+
+@router.post("/review/submit-batch")
+async def submit_review_batch():
+    """批量提交低置信度检测到复核池（演示模式返回空操作）"""
+    return {"count": 0, "message": "演示模式：批量提交需要完整管线支持"}
 
 
 # ── Helpers ───────────────────────────────────────────────

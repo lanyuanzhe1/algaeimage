@@ -3,7 +3,7 @@
     <!-- Source tabs -->
     <el-tabs v-model="activeTab" style="margin-bottom:0" @tab-change="onTabChange">
       <el-tab-pane label="相机采集" name="camera" :disabled="state === 'running'" />
-      <el-tab-pane label="视频演示" name="video" :disabled="state === 'running'" />
+      <el-tab-pane label="" name="video" :disabled="state === 'running'" />
     </el-tabs>
 
     <!-- Camera control bar -->
@@ -83,8 +83,7 @@
         @click="handleStartVideo"
       >
         <el-icon><VideoPlay /></el-icon>
-        视频演示
-      </el-button>
+</el-button>
       <el-button
         type="danger"
         size="large"
@@ -180,7 +179,7 @@ const stateText = computed(() => ({
 
 const placeholderText = computed(() => {
   if (state.value === 'idle') {
-    return activeTab.value === 'video' ? '点击「视频演示」启动' : '点击「开始采集」启动'
+    return activeTab.value === 'video' ? '点击启动' : '点击「开始采集」启动'
   }
   if (state.value === 'starting') return '正在启动...'
   if (state.value === 'error') return errorMsg.value || '异常'

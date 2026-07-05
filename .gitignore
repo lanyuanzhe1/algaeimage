@@ -45,8 +45,6 @@ YOLO_input_preview_20260520/
 lifewatch_raw_samples/
 
 # Large binary / model / data files
-*.pt
-*.pth
 *.tif
 *.zip
 *.npz
@@ -65,12 +63,20 @@ code/picture/
 dist/
 build/
 *.spec
-code/algae_image_v2/dist-release
+code/algae_image_v2/dist-release*.zip
+code/algae_image_v2/build/
+code/algae_image_v2/dist/
+code/algae_image_v2/conda_env/
+code/algae_image_v2/frontend/node_modules/
 node_modules/
 .playwright-mcp/
 .claude/settings.json
 .claude/settings.local.json
 .superpowers/
+
+# algae_image_v2 release exceptions
+!code/algae_image_v2/frontend/dist/
+!code/algae_image_v2/frontend/dist/**
 
 Development/
 docs/reference_images/
@@ -78,4 +84,3 @@ code/algae_image_v2/backend/data/history.db
 scripts/
 start_20260620.bat
 stop_20260620.bat
-

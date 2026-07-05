@@ -452,7 +452,10 @@ class CameraController:
 
         # Exposure: disable auto, set manual (unit: microseconds)
         self._cam.MV_CC_SetEnumValue("ExposureAuto", 0)  # 0=Off
-        self._cam.MV_CC_SetFloatValue("ExposureTime", self._exposure_us)
+        time.sleep(0.2)  # 等待相机固件完成模式切换，否则 ExposureTime 节点锁住不可写
+        ret = self._cam.MV_CC_SetFloatValue("ExposureTime", self._exposure_us)
+        if ret != 0:
+            logger.error(f"SetFloatValue ExposureTime failed: 0x{ret:x}")
 
         # Register callback
         self._make_callback()

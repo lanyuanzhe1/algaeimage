@@ -1,0 +1,19 @@
+完整了。以下是 73.9% mAP50 YOLOv8s 基线 训练阶段所有输出的位置和格式：
+
+训练输出文件地图
+
+code/algae_guardian/data/yolo_results/
+├── training/                          ← 训练指标
+│   ├── results.csv                    ← 283 epoch 逐轮指标 (34KB)
+│   ├── results.png                    ← 训练曲线图 (312KB)
+│   ├── args.yaml                      ← 完整训练配置
+│   ├── train.log                      ← 完整训练日志 (747KB)
+│   └── weights/
+│       └── best.pt                    ← 最佳权重 (被 gitignore)
+│
+└── predictions/                       ← 293 张全量预测输出
+    ├── SNAP-003217-0030.jpg           ← 带检测框的可视化图
+    ├── ...                            ← (共 293 张 JPG)
+    └── labels/                        ← ⭐ 核心：逐张检测数据
+        ├── SNAP-003217-0030.txt       ← YOLO 格式标签
+        └── ...                        ← (共 292 个 txt)

@@ -97,7 +97,10 @@
       "Bash(claude-code --help)",
       "Bash(bash -c 'python3 --version 2>&1; python --version 2>&1')",
       "Read(//c/Users/HP/**)",
-      "Bash(/a/Anaconda_envs/envs/ican/conda init *)"
+      "Bash(/a/Anaconda_envs/envs/ican/conda init *)",
+      "Bash(KMP_DUPLICATE_LIB_OK=TRUE \"A:/Anaconda_envs/envs/ican/python.exe\" code/batch_predict_fullpipeline.py)",
+      "Bash(bun --version)",
+      "Bash(/c/Windows/System32/WindowsPowerShell/v1.0/powershell.exe -Command \"irm bun.sh/install.ps1 | iex\")"
     ],
     "additionalDirectories": [
       "\\tmp"

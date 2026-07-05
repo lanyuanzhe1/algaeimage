@@ -74,3 +74,8 @@ node_modules/
 
 Development/
 docs/reference_images/
+code/algae_image_v2/backend/data/history.db
+scripts/
+start_20260620.bat
+stop_20260620.bat
+

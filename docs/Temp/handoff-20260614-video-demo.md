@@ -105,7 +105,7 @@ os.kill(pid, signal.SIGTERM)
 "A:/Anaconda_envs/envs/ican/python.exe" -c "...tasklist...os.kill..."
 
 # 1. 启动后端
-cd e:/code/codex/code/algae_image_v2
+cd e:/code/algaeimage/code/algae_image_v2
 "A:/Anaconda_envs/envs/ican/python.exe" -m uvicorn backend.app.main:app --host 0.0.0.0 --port 8000 &
 
 # 2. 等待就绪 (YOLO 加载 ~15s)
@@ -131,8 +131,8 @@ curl -s -o /dev/null -w "%{http_code}" http://localhost:8000/docs  # 期望 200
 
 | 路径 | 说明 |
 |------|------|
-| `e:/code/codex/code/algae_image_v2/` | V2 项目根 |
-| `e:/code/codex/video/` | 视频文件目录（repo root 下） |
+| `e:/code/algaeimage/code/algae_image_v2/` | V2 项目根 |
+| `e:/code/algaeimage/video/` | 视频文件目录（repo root 下） |
 | `A:/Anaconda_envs/envs/ican/python.exe` | conda 环境 Python |
 | `A:/Program Files/nodejs/npm.cmd` | 前端构建 |
 
@@ -140,10 +140,10 @@ curl -s -o /dev/null -w "%{http_code}" http://localhost:8000/docs  # 期望 200
 
 ## 相关记忆文件
 
-- `e:\code\codex\.claude\memory\field_startup_guide.md` — 外场启动完整流程 + 避坑
-- `e:\code\codex\.claude\memory\conda_bash_path_fix.md` — bash 中 conda 不可用的根因
-- `e:\code\codex\.claude\memory\demo_workflow_architecture.md` — 样机架构
-- `e:\code\codex\.claude\memory\MEMORY.md` — 总索引
+- `e:\code\algaeimage\.claude\memory\field_startup_guide.md` — 外场启动完整流程 + 避坑
+- `e:\code\algaeimage\.claude\memory\conda_bash_path_fix.md` — bash 中 conda 不可用的根因
+- `e:\code\algaeimage\.claude\memory\demo_workflow_architecture.md` — 样机架构
+- `e:\code\algaeimage\.claude\memory\MEMORY.md` — 总索引
 
 ---
 

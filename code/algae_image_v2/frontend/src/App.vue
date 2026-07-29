@@ -2,9 +2,9 @@
   <el-container class="app-container">
     <el-header class="app-header">
       <div class="brand" @click="$router.push('/')">
-        <span class="brand-mark">藻</span>
+        <span class="brand-mark">微</span>
         <div>
-          <h1>藻影知微 有害藻华早期预警平台</h1>
+          <h1>微险先知 水下微生物监测引领者</h1>
           <p class="subtitle">基于偏振成像与深度学习图像识别的智能监测系统</p>
         </div>
       </div>

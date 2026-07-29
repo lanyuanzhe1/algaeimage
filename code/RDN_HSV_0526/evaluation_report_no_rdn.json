@@ -13,6 +13,6 @@
   "total_gt_boxes": 3162,
   "avg_time_s": 0.653,
   "device": "cuda",
-  "yolo_weights": "E:\\code\\codex\\code\\Polar_sim_0520\\output\\yolo_training_hsv\\v8l_hsv\\weights\\best.pt",
+  "yolo_weights": "E:\\code\\algaeimage\\code\\Polar_sim_0520\\output\\yolo_training_hsv\\v8l_hsv\\weights\\best.pt",
   "note": "HSV polarization \u2192 I_enh v2 \u2192 YOLOv8l. NO RDN reconstruction."
 }

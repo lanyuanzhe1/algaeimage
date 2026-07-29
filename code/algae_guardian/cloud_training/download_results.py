@@ -8,7 +8,7 @@ PORT = 30957
 USER = "root"
 PASSWORD = "ZWAL2OPnkyBOIVxw1AaXcfaFXCDD2sCv"
 
-LOCAL_DIR = Path(r"E:\code\codex\code\algae_guardian\data\yolo_results")
+LOCAL_DIR = Path(r"E:\code\algaeimage\code\algae_guardian\data\yolo_results")
 REMOTE_RESULTS = "/data/fmpd_rdn_output/yolo_results/v8s_baseline"
 REMOTE_PREDICT = "/data/fmpd_rdn_output/yolo_results/v8s_baseline_predict"
 REMOTE_LOG = "/data/fmpd_rdn_output/train.log"

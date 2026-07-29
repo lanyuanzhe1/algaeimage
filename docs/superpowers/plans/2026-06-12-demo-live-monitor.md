@@ -52,7 +52,7 @@ class LatestResult(BaseModel):
 - [ ] **Step 2: 运行 API 测试确认向后兼容**
 
 ```bash
-cd e:/code/codex/code/algae_image_v2
+cd e:/code/algaeimage/code/algae_image_v2
 python -m pytest tests/test_api.py -v -k "latest"
 ```
 Expected: PASS（Optional 字段默认 None，旧测试不受影响）
@@ -568,7 +568,7 @@ async def stream_stop():
 - [ ] **Step 4: 运行 API 测试**
 
 ```bash
-cd e:/code/codex/code/algae_image_v2
+cd e:/code/algaeimage/code/algae_image_v2
 python -m pytest tests/test_api.py -v
 ```
 Expected: 7 passed（新增端点不影响现有测试）
@@ -630,7 +630,7 @@ app.mount("/static/live", StaticFiles(directory=_live_dir), name="live")
 - [ ] **Step 3: 运行 API 测试确认无回归**
 
 ```bash
-cd e:/code/codex/code/algae_image_v2
+cd e:/code/algaeimage/code/algae_image_v2
 python -m pytest tests/test_api.py -v
 ```
 Expected: 7 passed
@@ -1198,7 +1198,7 @@ git commit -m "feat: auto-poll history page for new records every 3s"
 - [ ] **Step 1: 构建前端**
 
 ```bash
-cd e:/code/codex/code/algae_image_v2/frontend
+cd e:/code/algaeimage/code/algae_image_v2/frontend
 npm run build
 ```
 Expected: `✓ built in Xs`
@@ -1206,7 +1206,7 @@ Expected: `✓ built in Xs`
 - [ ] **Step 2: 启动后端确认无 import 错误**
 
 ```bash
-cd e:/code/codex/code/algae_image_v2
+cd e:/code/algaeimage/code/algae_image_v2
 A:/Anaconda_envs/envs/ican/python.exe -c "from backend.app.services.camera import camera_controller; print('Camera module OK')"
 ```
 Expected: `Camera module OK` 或 SDK warning（非 Windows 环境）
@@ -1214,7 +1214,7 @@ Expected: `Camera module OK` 或 SDK warning（非 Windows 环境）
 - [ ] **Step 3: 运行全量 API 测试**
 
 ```bash
-cd e:/code/codex/code/algae_image_v2
+cd e:/code/algaeimage/code/algae_image_v2
 python -m pytest tests/test_api.py -v
 ```
 Expected: 7 passed
@@ -1222,7 +1222,7 @@ Expected: 7 passed
 - [ ] **Step 4: 强制添加前端 dist/ 更新到 git（dist/ 在 .gitignore 中）**
 
 ```bash
-cd e:/code/codex/code/algae_image_v2
+cd e:/code/algaeimage/code/algae_image_v2
 git add -f frontend/dist/
 git commit -m "build: update frontend dist for live monitor release"
 ```

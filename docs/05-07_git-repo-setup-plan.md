@@ -6,12 +6,12 @@
 
 ## 仓库根目录
 
-`e:/code/codex/`
+`e:/code/algaeimage/`
 
 ## 纳入范围
 
 ```
-e:/code/codex/
+e:/code/algaeimage/
 ├── .claude/              ✅ Claude Code 配置
 ├── .vscode/              ✅ IDE 配置
 ├── CLAUDE.md             ✅ 项目指令文件

@@ -12,6 +12,6 @@
   "total_gt_boxes": 3162,
   "avg_time_s": 4.442351988151212,
   "device": "cuda",
-  "rdn_weights": "E:\\code\\codex\\code\\RDN_HSV_0526\\checkpoint\\best.pth",
-  "yolo_weights": "E:\\code\\codex\\code\\Polar_sim_0520\\output\\yolo_training_hsv\\v8l_hsv\\weights\\best.pt"
+  "rdn_weights": "E:\\code\\algaeimage\\code\\RDN_HSV_0526\\checkpoint\\best.pth",
+  "yolo_weights": "E:\\code\\algaeimage\\code\\Polar_sim_0520\\output\\yolo_training_hsv\\v8l_hsv\\weights\\best.pt"
 }

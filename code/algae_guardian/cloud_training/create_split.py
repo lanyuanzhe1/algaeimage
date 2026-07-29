@@ -3,8 +3,8 @@ import json, random, shutil
 from pathlib import Path
 
 random.seed(42)
-NPZ_DIR = Path(r"E:\code\codex\code\algae_guardian\data\fmpd_download\extracted\dataset\polarized\polarization")
-OUTPUT_DIR = Path(r"E:\code\codex\code\algae_guardian\data\fmpd_rdn_output")
+NPZ_DIR = Path(r"E:\code\algaeimage\code\algae_guardian\data\fmpd_download\extracted\dataset\polarized\polarization")
+OUTPUT_DIR = Path(r"E:\code\algaeimage\code\algae_guardian\data\fmpd_rdn_output")
 COCO_JSON = NPZ_DIR.parent.parent / "dataset" / "annotations.json"
 
 # Get all stems

@@ -5,10 +5,10 @@ import warnings
 warnings.filterwarnings('ignore')
 
 # Paths
-LOCAL_DIR = r"e:\code\codex\code\Polar_sim_0522"
+LOCAL_DIR = r"e:\code\algaeimage\code\Polar_sim_0522"
 sys.path.insert(0, LOCAL_DIR)
 # Also add algae_guardian for fallback modules if needed
-sys.path.insert(0, r"e:\code\codex\code\algae_guardian")
+sys.path.insert(0, r"e:\code\algaeimage\code\algae_guardian")
 
 import numpy as np
 import cv2
@@ -76,10 +76,10 @@ def process_4_channels(channels, oh, ow, pp, enhancer):
     return final
 
 def main():
-    img_dir = r"e:\code\codex\lifewatch_raw_samples\test_500\img500"
-    out_dir = r"e:\code\codex\code\Polar_sim_0522\data\final_samples_500"
-    rdn_model_path = r"e:\code\codex\code\algae_guardian\ml\models\rdn_polarization.pth"
-    yolo_model_path = r"e:\code\codex\code\Polar_sim_0522\output\hsv_training_artifacts_20260524\v8l_hsv_stable\weights\best.pt"
+    img_dir = r"e:\code\algaeimage\lifewatch_raw_samples\test_500\img500"
+    out_dir = r"e:\code\algaeimage\code\Polar_sim_0522\data\final_samples_500"
+    rdn_model_path = r"e:\code\algaeimage\code\algae_guardian\ml\models\rdn_polarization.pth"
+    yolo_model_path = r"e:\code\algaeimage\code\Polar_sim_0522\output\hsv_training_artifacts_20260524\v8l_hsv_stable\weights\best.pt"
     
     os.makedirs(out_dir, exist_ok=True)
     

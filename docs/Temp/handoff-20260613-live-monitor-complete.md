@@ -45,7 +45,7 @@ SDK callback → frame queue → worker thread
 
 ```bash
 conda activate ican
-cd e:/code/codex/code/algae_image_v2
+cd e:/code/algaeimage/code/algae_image_v2
 python -m uvicorn backend.app.main:app --host 0.0.0.0 --port 8000
 # 浏览器 → http://localhost:8000/app/detect/live → 点击"开始采集"
 ```

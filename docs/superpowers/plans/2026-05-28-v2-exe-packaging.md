@@ -34,8 +34,8 @@
 - [ ] **Step 1: 下载 Chart.js v4.4.0 UMD 构建**
 
 ```bash
-mkdir -p e:/code/codex/code/algae_image_v2/frontend/vendor
-curl -sL -o e:/code/codex/code/algae_image_v2/frontend/vendor/chart.umd.min.js \
+mkdir -p e:/code/algaeimage/code/algae_image_v2/frontend/vendor
+curl -sL -o e:/code/algaeimage/code/algae_image_v2/frontend/vendor/chart.umd.min.js \
   https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js
 ```
 
@@ -113,7 +113,7 @@ PORT = 8000
 - [ ] **Step 2: 运行测试验证路径解析**
 
 ```bash
-cd e:/code/codex/code/algae_image_v2
+cd e:/code/algaeimage/code/algae_image_v2
 python -c "from backend.app.config import BASE_DIR, WEIGHTS_DIR, YOLO_WEIGHTS; print('BASE:', BASE_DIR); print('Weights:', WEIGHTS_DIR); print('YOLO:', YOLO_WEIGHTS)"
 ```
 
@@ -164,7 +164,7 @@ def load_yolo_by_key(model_key: str = DEFAULT_MODEL, device: str = "cpu") -> "YO
 - [ ] **Step 2: 运行管线测试**
 
 ```bash
-cd e:/code/codex/code/algae_image_v2
+cd e:/code/algaeimage/code/algae_image_v2
 python -m pytest tests/test_pipeline.py -v
 ```
 
@@ -227,7 +227,7 @@ FRONTEND_DIR = os.path.normpath(os.path.abspath(_FRONTEND))
 - [ ] **Step 2: 启动验证**
 
 ```bash
-cd e:/code/codex/code/algae_image_v2
+cd e:/code/algaeimage/code/algae_image_v2
 python -m uvicorn backend.app.main:app --host 0.0.0.0 --port 8000 &
 sleep 3
 curl -s http://localhost:8000/app/ | head -5
@@ -300,7 +300,7 @@ if __name__ == "__main__":
 - [ ] **Step 2: 本地验证**
 
 ```bash
-cd e:/code/codex/code/algae_image_v2
+cd e:/code/algaeimage/code/algae_image_v2
 python desktop_launcher.py
 ```
 
@@ -453,7 +453,7 @@ pip install pyinstaller
 - [ ] **Step 2: 构建**
 
 ```bash
-cd e:/code/codex/code/algae_image_v2
+cd e:/code/algaeimage/code/algae_image_v2
 pyinstaller AlgaeImageV2.spec --clean --noconfirm
 ```
 
@@ -480,7 +480,7 @@ ls dist/AlgaeImageV2/weights/best_v8l.pt
 - [ ] **Step 1: 压缩发行包**
 
 ```bash
-cd e:/code/codex/code/algae_image_v2/dist
+cd e:/code/algaeimage/code/algae_image_v2/dist
 # Windows: 用 PowerShell Compress-Archive 或右键压缩
 powershell -Command "Compress-Archive -Path AlgaeImageV2 -DestinationPath AlgaeImageV2-windows-amd64.zip"
 ```

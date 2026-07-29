@@ -167,7 +167,7 @@ if __name__ == "__main__":
 
 ```bash
 # 先启动 backend (另一个终端)
-cd e:/code/codex/code/algae_image_v2
+cd e:/code/algaeimage/code/algae_image_v2
 python -m uvicorn backend.app.main:app --host 0.0.0.0 --port 8000 &
 
 # 单帧测试
@@ -399,7 +399,7 @@ async def get_stream_status():
 
 ```bash
 # 启动 backend
-cd e:/code/codex/code/algae_image_v2
+cd e:/code/algaeimage/code/algae_image_v2
 A:/Anaconda_envs/envs/ican/python.exe -m uvicorn backend.app.main:app --host 0.0.0.0 --port 8000 &
 
 # 测试 stream-status (初始为空)
@@ -586,7 +586,7 @@ const liveStatsCards = computed(() => {
 - [ ] **Step 5: 构建验证**
 
 ```bash
-cd e:/code/codex/code/algae_image_v2/frontend
+cd e:/code/algaeimage/code/algae_image_v2/frontend
 npm run build
 ```
 
@@ -606,7 +606,7 @@ git commit -m "feat: add live monitoring mode to DetectPage with 2s polling"
 - [ ] **Step 1: 启动 backend**
 
 ```bash
-cd e:/code/codex/code/algae_image_v2
+cd e:/code/algaeimage/code/algae_image_v2
 A:/Anaconda_envs/envs/ican/python.exe -m uvicorn backend.app.main:app --host 0.0.0.0 --port 8000
 ```
 

@@ -22,7 +22,7 @@ metadata:
 
 ## 关键设计文档
 
-- CLAUDE.md: `E:\code\codex\CLAUDE.md`
+- CLAUDE.md: `E:\code\algaeimage\CLAUDE.md`
 - code/README.md: 完整目录地图和权重清单
 - docs/handoff-20260524-algae-guardian-v1.md: V1 构建交接文档
 - docs/v1_product_build_0524.md: V1 产品构建日志

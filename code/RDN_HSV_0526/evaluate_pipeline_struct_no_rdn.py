@@ -39,12 +39,12 @@ sys.path.insert(0, str(BASE.parent / "Polar_sim_0520" / "image_processing"))
 from polarization_sim import simulate_polarization_channels
 
 # ── Config ─────────────────────────────────────────────────────────
-FMPD_IMAGES = Path("E:/code/codex/code/algae_guardian/data/download/extracted/dataset/dataset")
-FMPD_LABELS = Path("E:/code/codex/code/algae_guardian/data/fmpd_rdn_output/labels")
+FMPD_IMAGES = Path("E:/code/algaeimage/code/algae_guardian/data/download/extracted/dataset/dataset")
+FMPD_LABELS = Path("E:/code/algaeimage/code/algae_guardian/data/fmpd_rdn_output/labels")
 
 # Use Structure Tensor YOLO weights (NOT HSV — different training data distribution)
 YOLO_WEIGHTS_STRUCT = Path(
-    "E:/code/codex/code/algae_guardian/data/fmpd_rdn_output/"
+    "E:/code/algaeimage/code/algae_guardian/data/fmpd_rdn_output/"
     "yolo_results/v8l_upgrade/weights/best.pt"
 )
 

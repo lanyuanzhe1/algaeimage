@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>微险先知 — 核心算法管线代码索引</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family: 'Microsoft YaHei', 'PingFang SC', Consolas, monospace; background: #0d1117; color: #c9d1d9; padding: 40px; }
+h1 { font-size: 28px; color: #58a6ff; text-align:center; margin-bottom: 8px; }
+.subtitle { text-align:center; color: #8b949e; margin-bottom: 40px; font-size: 14px; }
+.pipeline { display:flex; align-items:center; justify-content:center; gap: 0; margin-bottom: 48px; flex-wrap: wrap; }
+.step { background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 14px 18px; text-align:center; min-width: 120px; }
+.step .num { width: 28px; height: 28px; border-radius: 50%; background: #238636; color: #fff; display: inline-grid; place-items: center; font-size: 13px; font-weight: 700; margin-bottom: 6px; }
+.step strong { display:block; font-size: 13px; color: #f0f6fc; }
+.step small { font-size: 11px; color: #8b949e; }
+.arrow { color: #30363d; font-size: 22px; margin: 0 6px; }
+.card { background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 20px 24px; margin-bottom: 20px; }
+.card h2 { color: #58a6ff; font-size: 18px; margin-bottom: 6px; }
+.card .file { color: #f78166; font-family: Consolas, monospace; font-size: 13px; margin-bottom: 14px; }
+.card pre { background: #0d1117; border: 1px solid #30363d; border-radius: 6px; padding: 14px 18px; overflow-x: auto; font-size: 13px; line-height: 1.6; }
+.card pre .kw { color: #ff7b72; }
+.card pre .fn { color: #d2a8ff; }
+.card pre .cm { color: #8b949e; font-style: italic; }
+.card pre .str { color: #a5d6ff; }
+.card pre .num { color: #79c0ff; }
+.desc { color: #8b949e; font-size: 13px; margin: 8px 0 12px; line-height: 1.7; }
+.section-title { color: #f0f6fc; font-size: 22px; margin: 40px 0 20px; padding-bottom: 8px; border-bottom: 1px solid #30363d; }
+</style>
+</head>
+<body>
+
+<h1>微险先知</h1>
+<p class="subtitle">基于偏振成像与深度学习的藻类显微图像检测 — 核心算法管线代码索引</p>
+
+<div class="pipeline">
+  <div class="step"><div class="num">1</div><strong>偏振模拟</strong><small>结构张量+Malus</small></div>
+  <span class="arrow">→</span>
+  <div class="step"><div class="num">2</div><strong>RDN 重建</strong><small>残差稠密网络</small></div>
+  <span class="arrow">→</span>
+  <div class="step"><div class="num">3</div><strong>去散射增强</strong><small>I_enh v2</small></div>
+  <span class="arrow">→</span>
+  <div class="step"><div class="num">4</div><strong>YOLOv8s 检测</strong><small>5类 FMPD</small></div>
+</div>
+
+<!-- Step 1: Polarization Simulation -->
+<div class="card">
+  <h2>Step 1 — 结构张量偏振模拟</h2>
+  <div class="file">📄 code/algae_image_v2/core_engine/polarization_sim.py</div>
+  <div class="desc">
+    使用 <strong>结构张量梯度法</strong> 从单张 RGB 明场图模拟四个偏振角度 (I₀/I₄₅/I₉₀/I₁₃₅)。<br>
+    核心公式：梯度方向 → AoP，梯度幅值 → DoLP，再通过 <strong>Malus 定律</strong> 反推四个通道。<br>
+    V1 算法原型位于 <code>code/Polar_sim_0520/image_processing/polarization_sim.py</code>
+  </div>
+  <pre><span class="kw">def</span> <span class="fn">compute_polarization_sim</span>(image_rgb: np.ndarray) -&gt; np.ndarray:
+    <span class="cm">"""从单张RGB明场图模拟四通道偏振图像 (I0, I45, I90, I135)"""</span>
+    gray = cv2.cvtColor(image_rgb, cv2.COLOR_RGB2GRAY).astype(np.float32)
+    <span class="cm"># 结构张量 — 梯度幅值 &amp; 梯度方向</span>
+    Ix = cv2.Sobel(gray, cv2.CV_32F, 1, 0, ksize=3)
+    Iy = cv2.Sobel(gray, cv2.CV_32F, 0, 1, ksize=3)
+    G = np.sqrt(Ix**2 + Iy**2)
+    theta = np.arctan2(Iy, Ix)
+    <span class="cm"># AoP ∈ [0, π), DoLP ∈ [0, 1]</span>
+    AoP = np.mod(theta, np.pi)
+    DoLP = np.clip(G / (G.max() + 1e-8), 0, 1)
+    <span class="cm"># Malus 定律 → 四通道</span>
+    I0 = S0 * (1 + DoLP * np.cos(2 * AoP))
+    I45 = S0 * (1 + DoLP * np.cos(2 * (AoP - np.pi/4)))
+    I90 = S0 * (1 + DoLP * np.cos(2 * (AoP - np.pi/2)))
+    I135 = S0 * (1 + DoLP * np.cos(2 * (AoP - 3*np.pi/4)))
+    <span class="kw">return</span> np.stack([I0, I45, I90, I135], axis=2)</pre>
+</div>
+
+<!-- Step 2: RDN Reconstruction -->
+<div class="card">
+  <h2>Step 2 — RDN 残差稠密网络偏振重建</h2>
+  <div class="file">📄 code/algae_image_v2/core_engine/reconstructor.py</div>
+  <div class="desc">
+    <strong>RDBN (Residual Dense Network)</strong>：4通道输入 → 4通道输出，12个 RDB blocks，每 block 6层卷积。<br>
+    参数量 ~0.6M，PSNR 62.46dB @ epoch 97。权重：<code>weights/rdn_polarization.pth</code>
+  </div>
+  <pre><span class="kw">class</span> <span class="fn">RDB</span>(nn.Module):
+    <span class="cm">"""Residual Dense Block — 6层卷积 + 残差连接"""</span>
+    <span class="kw">def</span> __init__(self, nFeat=16, nLayer=6):
+        <span class="kw">for</span> i <span class="kw">in</span> range(nLayer):
+            self.conv.append(nn.Conv2d(nFeat*(i+1), nFeat, 3, 1, 1))
+
+<span class="kw">class</span> <span class="fn">PolarizationReconstructor</span>(nn.Module):
+    <span class="cm">"""RDN: 4→16→16→4, 12 RDB blocks"""</span>
+    <span class="kw">def</span> forward(self, x):
+        <span class="cm"># x: [B, 4, H, W] — I0/I45/I90/I135</span>
+        f = self.sfe(x)         <span class="cm"># Shallow Feature Extraction</span>
+        <span class="kw">for</span> rdb <span class="kw">in</span> self.rdbs:    <span class="cm"># 12× RDB blocks</span>
+            f = rdb(f)
+        f = self.gff(f)         <span class="cm"># Global Feature Fusion</span>
+        <span class="kw">return</span> self.recon(f)    <span class="cm"># → [B, 4, H, W]</span></pre>
+</div>
+
+<!-- Step 3: Enhancement -->
+<div class="card">
+  <h2>Step 3 — I_enh v2 去散射增强</h2>
+  <div class="file">📄 code/algae_image_v2/core_engine/enhancement.py</div>
+  <div class="desc">
+    融合 Stokes 参数的去散射增强公式，通过 <strong>DoLP 加权</strong> 抑制散射背景、增强目标对比度。<br>
+    核心公式在 <code>enhance_image()</code> 函数中。
+  </div>
+  <pre><span class="kw">def</span> <span class="fn">compute_stokes</span>(I0, I45, I90, I135):
+    <span class="cm">"""计算 Stokes 参数 (S0, S1, S2) + DoLP + AoP"""</span>
+    S0 = I0 + I90
+    S1 = I0 - I90
+    S2 = I45 - I135
+    DoLP = np.sqrt(S1**2 + S2**2) / (S0 + 1e-8)
+    AoP = 0.5 * np.arctan2(S2, S1)
+    <span class="kw">return</span> S0, S1, S2, DoLP, AoP
+
+<span class="kw">def</span> <span class="fn">enhance_image</span>(S0, DoLP, AoP, alpha=1.0, gamma=0.5, beta=0.3):
+    <span class="cm">"""I_enh v2: S0*(1+α-γ·DoLP+β·|sin(2·AoP)|·DoLP)"""</span>
+    I_enh = S0 * (1 + alpha - gamma * DoLP + beta * np.abs(np.sin(2 * AoP)) * DoLP)
+    <span class="kw">return</span> np.clip(I_enh, 0, 255).astype(np.uint8)</pre>
+</div>
+
+<!-- Step 4: YOLO Detection -->
+<div class="card">
+  <h2>Step 4 — YOLOv8s 藻种检测</h2>
+  <div class="file">📄 code/algae_image_v2/core_engine/inference.py</div>
+  <div class="desc">
+    YOLOv8s 检测 <strong>5 类 FMPD</strong>：Woronichinia / Spiroides / Dinobryon / Other-phytoplankton / Non-phytoplankton。<br>
+    默认模型 mAP50 <strong>73.9%</strong>，权重：<code>weights/best_v8s.pt</code> (~22MB)
+  </div>
+  <pre><span class="kw">class</span> <span class="fn">AlgaeDetector</span>:
+    <span class="kw">def</span> __init__(self, weights, device=<span class="str">'cuda'</span>, imgsz=640):
+        self.model = YOLO(weights)
+        self.class_names = [
+            <span class="str">'Woronichinia'</span>, <span class="str">'Spiroides'</span>, <span class="str">'Dinobryon'</span>,
+            <span class="str">'Other-phytoplankton'</span>, <span class="str">'Non-phytoplankton'</span>]
+
+    <span class="kw">def</span> <span class="fn">detect</span>(self, image):
+        results = self.model(image, imgsz=self.imgsz, conf=0.25, iou=0.7)
+        <span class="kw">return</span> [{
+            <span class="str">'class'</span>: self.class_names[int(b.cls)], <span class="str">'conf'</span>: float(b.conf),
+            <span class="str">'bbox'</span>: b.xyxy.tolist()
+        } <span class="kw">for</span> b <span class="kw">in</span> results[0].boxes]</pre>
+</div>
+
+<!-- Section: Model Weights -->
+<h2 class="section-title">🧠 模型权重一览</h2>
+
+<div class="card">
+  <table style="width:100%; border-collapse:collapse; font-size:13px;">
+    <tr style="color:#8b949e; text-align:left">
+      <th style="padding:8px 12px; border-bottom:1px solid #30363d">文件</th>
+      <th style="padding:8px 12px; border-bottom:1px solid #30363d">描述</th>
+      <th style="padding:8px 12px; border-bottom:1px solid #30363d">大小</th>
+      <th style="padding:8px 12px; border-bottom:1px solid #30363d">指标</th>
+    </tr>
+    <tr>
+      <td style="padding:8px 12px; color:#f78166; font-family:Consolas">weights/best_v8s.pt</td>
+      <td style="padding:8px 12px">YOLOv8s FMPD 5类</td>
+      <td style="padding:8px 12px; color:#79c0ff">~22 MB</td>
+      <td style="padding:8px 12px; color:#238636">mAP50 73.9%</td>
+    </tr>
+    <tr>
+      <td style="padding:8px 12px; color:#f78166; font-family:Consolas">weights/best_v8l.pt</td>
+      <td style="padding:8px 12px">YOLOv8l FMPD 5类 (备选)</td>
+      <td style="padding:8px 12px; color:#79c0ff">~88 MB</td>
+      <td style="padding:8px 12px; color:#8b949e">mAP50 42.9%</td>
+    </tr>
+    <tr>
+      <td style="padding:8px 12px; color:#f78166; font-family:Consolas">weights/rdn_polarization.pth</td>
+      <td style="padding:8px 12px">RDN 偏振重建</td>
+      <td style="padding:8px 12px; color:#79c0ff">~2.5 MB</td>
+      <td style="padding:8px 12px; color:#238636">PSNR 62.46dB</td>
+    </tr>
+    <tr>
+      <td style="padding:8px 12px; color:#f78166; font-family:Consolas">weights/best.pt</td>
+      <td style="padding:8px 12px">YOLOv8s LifeWatch 95类 (V1兼容)</td>
+      <td style="padding:8px 12px; color:#79c0ff">~22 MB</td>
+      <td style="padding:8px 12px; color:#238636">mAP50 84.7%</td>
+    </tr>
+  </table>
+</div>
+
+<!-- Section: Dataset -->
+<h2 class="section-title">📊 FMPD 数据集 (293张 FlowCam 真实显微图像)</h2>
+
+<div class="card">
+  <div class="desc">
+    <strong>数据来源：</strong>FlowCam 明场显微成像，5 类淡水有害藻种。<br>
+    <strong>数据量：</strong>293 张（瓶颈所在，不足以支撑大模型），80/20 训练/验证划分。<br>
+    <strong>目录：</strong><code>code/algae_guardian/data/download/extracted/dataset/</code>
+  </div>
+  <table style="width:100%; border-collapse:collapse; font-size:13px; margin-top:14px;">
+    <tr style="color:#8b949e; text-align:left">
+      <th style="padding:8px 12px; border-bottom:1px solid #30363d">类别</th>
+      <th style="padding:8px 12px; border-bottom:1px solid #30363d">说明</th>
+      <th style="padding:8px 12px; border-bottom:1px solid #30363d">YOLOv8s AP50</th>
+    </tr>
+    <tr><td style="padding:8px 12px; color:#f0f6fc">Woronichinia</td><td style="padding:8px 12px; color:#8b949e">拟项圈藻</td><td style="padding:8px 12px; color:#238636">0.659</td></tr>
+    <tr><td style="padding:8px 12px; color:#f0f6fc">Spiroides</td><td style="padding:8px 12px; color:#8b949e">螺旋藻</td><td style="padding:8px 12px; color:#238636">0.610</td></tr>
+    <tr><td style="padding:8px 12px; color:#f0f6fc">Dinobryon</td><td style="padding:8px 12px; color:#8b949e">锥囊藻</td><td style="padding:8px 12px; color:#8b949e">—</td></tr>
+    <tr><td style="padding:8px 12px; color:#f0f6fc">Other-phytoplankton</td><td style="padding:8px 12px; color:#8b949e">其他浮游植物</td><td style="padding:8px 12px; color:#8b949e">—</td></tr>
+    <tr><td style="padding:8px 12px; color:#f0f6fc">Non-phytoplankton</td><td style="padding:8px 12px; color:#8b949e">非浮游植物</td><td style="padding:8px 12px; color:#f78166">0.162</td></tr>
+  </table>
+</div>
+
+<!-- Section: Data Directory -->
+<h2 class="section-title">🗂️ 原始数据集路径</h2>
+
+<div class="card">
+  <div class="desc">
+    以下为<strong>实际磁盘路径</strong>，所有数据均在 <code>code/algae_guardian/data/</code> 下。
+  </div>
+  <table style="width:100%; border-collapse:collapse; font-size:13px; margin-top:14px;">
+    <tr style="color:#8b949e; text-align:left">
+      <th style="padding:8px 12px; border-bottom:1px solid #30363d">数据内容</th>
+      <th style="padding:8px 12px; border-bottom:1px solid #30363d">磁盘路径</th>
+      <th style="padding:8px 12px; border-bottom:1px solid #30363d">数量</th>
+    </tr>
+    <tr>
+      <td style="padding:8px 12px; color:#f0f6fc">🔬 原始 TIFF 明场图</td>
+      <td style="padding:8px 12px; color:#f78166; font-family:Consolas; font-size:12px">data/download/extracted/dataset/dataset/*.tif</td>
+      <td style="padding:8px 12px; color:#79c0ff">293 张</td>
+    </tr>
+    <tr>
+      <td style="padding:8px 12px; color:#f0f6fc">🌈 偏振模拟结果</td>
+      <td style="padding:8px 12px; color:#f78166; font-family:Consolas; font-size:12px">data/download/extracted/dataset/polarized/polarization/*.npz</td>
+      <td style="padding:8px 12px; color:#79c0ff">293 个</td>
+    </tr>
+    <tr>
+      <td style="padding:8px 12px; color:#f0f6fc">✨ RDN 重建输出 (I_enh)</td>
+      <td style="padding:8px 12px; color:#f78166; font-family:Consolas; font-size:12px">data/fmpd_rdn_output/images/</td>
+      <td style="padding:8px 12px; color:#79c0ff">293 张</td>
+    </tr>
+    <tr>
+      <td style="padding:8px 12px; color:#f0f6fc">🎯 YOLO 预测结果 (已画框)</td>
+      <td style="padding:8px 12px; color:#f78166; font-family:Consolas; font-size:12px">data/yolo_results/predictions/</td>
+      <td style="padding:8px 12px; color:#79c0ff">295 张</td>
+    </tr>
+    <tr>
+      <td style="padding:8px 12px; color:#f0f6fc">📋 训练集元数据</td>
+      <td style="padding:8px 12px; color:#f78166; font-family:Consolas; font-size:12px">data/Flowcam_images_training_split_metadata/</td>
+      <td style="padding:8px 12px; color:#8b949e">—</td>
+    </tr>
+  </table>
+  <div class="desc" style="margin-top:14px">
+    <strong>根目录：</strong><code>e:\code\algaeimage\code\algae_guardian\data\</code><br>
+    <strong>管线数据流：</strong>原始 TIFF → 结构张量偏振模拟 (.npz) → RDN 重建 (I_enh) → YOLO 预测 (画框)<br>
+    <strong>注意：</strong>所有数据目录在 <code>.gitignore</code> 中排除，不纳入版本控制
+  </div>
+</div>
+
+<!-- Section: Project Structure -->
+<h2 class="section-title">📁 项目结构速览</h2>
+
+<div class="card">
+  <pre><span class="cm">## V2 产品 (当前主线)</span>
+code/algae_image_v2/
+├── core_engine/          <span class="cm">← 核心算法库 (4个模块)</span>
+│   ├── polarization_sim.py   <span class="cm">Step 1: 结构张量偏振模拟</span>
+│   ├── reconstructor.py      <span class="cm">Step 2: RDN 偏振重建网络</span>
+│   ├── enhancement.py        <span class="cm">Step 3: I_enh v2 去散射增强</span>
+│   └── inference.py          <span class="cm">Step 4: YOLOv8s 检测</span>
+├── backend/              <span class="cm">← FastAPI 后端</span>
+├── frontend/             <span class="cm">← Vue3 前端</span>
+├── weights/              <span class="cm">← 模型权重</span>
+└── camera_grabber.py     <span class="cm">← 海康相机 SDK 直连</span>
+
+<span class="cm">## 算法原型 &amp; 实验</span>
+code/Polar_sim_0520/      <span class="cm">← 结构张量管线实验 (V1算法来源)</span>
+code/Polar_sim_0522/      <span class="cm">← HSV 偏振实验 (已废弃)</span>
+code/RDN_HSV_0526/        <span class="cm">← HSV+RDN 对照实验</span>
+code/SPDRDN/              <span class="cm">← RDN 原始研究</span>
+
+<span class="cm">## 研究项目</span>
+code/algae_guardian/      <span class="cm">← 训练/评估/完整实验管线</span></pre>
+</div>
+
+<p style="text-align:center; color:#484f58; margin-top:48px; font-size:12px;">
+ 微险先知 — 水下微生物监测引领者 | 基于偏振成像与深度学习的智能监测系统
+</p>
+
+</body>
+</html>

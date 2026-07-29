@@ -28,7 +28,7 @@ STATIC_DIR.mkdir(parents=True, exist_ok=True)
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 FRONTEND_DIR = PROJECT_ROOT / "frontend"
 FRONTEND_DIR.mkdir(exist_ok=True)
-PIC_DIR = PROJECT_ROOT.parent.parent / "pic"  # e:/code/codex/pic/
+PIC_DIR = PROJECT_ROOT.parent.parent / "pic"  # e:/code/algaeimage/pic/
 PIC_DIR.mkdir(exist_ok=True)
 
 app = FastAPI(

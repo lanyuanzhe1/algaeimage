@@ -1,7 +1,7 @@
 """Camera grabber — MVS SDK direct frame capture → detection backend.
 
 MV-CA013-20GC (GigE, 1.3MP color).
-Requires: MVS installed at A:/Program Files/MVS.
+Requires: MVS SDK installed (auto-detected from common paths or MVS_SDK_PATH env var).
 
 Usage:
     python camera_grabber.py              # continuous, sends frames to backend
@@ -23,11 +23,54 @@ import numpy as np
 import requests
 
 # ═══════════════════════════════════════════════════════════════
-# MVS SDK setup
+# MVS SDK setup — auto-detect installation paths
 # ═══════════════════════════════════════════════════════════════
-_MVS_DIR = r"A:\Program Files\MVS"
-_MVIMP_DIR = os.path.join(_MVS_DIR, "Development", "Samples", "Python", "MvImport")
-_DLL_DIR = r"C:\Program Files (x86)\Common Files\MVS\Runtime\Win64_x64"
+
+def _find_mvs_sdk():
+    """Auto-detect MVS SDK installation paths.
+
+    Detection order:
+      1. MVS_SDK_PATH 环境变量（最高优先级）
+      2. 常见安装盘符: A:, C:, D:, E: 下的 Program Files\MVS
+
+    Returns:
+        (mvs_root_dir, mvimp_dir, dll_dir) — 任一可能为 None。
+    """
+    import os as _os
+
+    # 1. 环境变量覆盖
+    env_path = _os.environ.get("MVS_SDK_PATH", "")
+    if env_path and _os.path.isdir(env_path):
+        mvimp = _os.path.join(env_path, "Development", "Samples", "Python", "MvImport")
+        if _os.path.isdir(mvimp):
+            dll_candidates = [
+                _os.path.join(_os.environ.get("ProgramFiles(x86)", r"C:\Program Files (x86)"),
+                              "Common Files", "MVS", "Runtime", "Win64_x64"),
+            ]
+            dll_dir = next((d for d in dll_candidates if _os.path.isdir(d)), None)
+            return env_path, mvimp, dll_dir
+
+    # 2. 常见安装位置
+    for drive in ["A:", "C:", "D:", "E:"]:
+        mvs_dir = _os.path.join(drive, _os.sep, "Program Files", "MVS")
+        mvimp = _os.path.join(mvs_dir, "Development", "Samples", "Python", "MvImport")
+        if _os.path.isdir(mvimp):
+            dll_dir = None
+            for d in [r"C:\Program Files (x86)\Common Files\MVS\Runtime\Win64_x64"]:
+                if _os.path.isdir(d):
+                    dll_dir = d
+                    break
+            return mvs_dir, mvimp, dll_dir
+
+    return None, None, None
+
+
+_MVS_DIR, _MVIMP_DIR, _DLL_DIR = _find_mvs_sdk()
+
+if _MVS_DIR is None:
+    print("[FATAL] MVS SDK not found. Install MVS or set MVS_SDK_PATH environment variable.")
+    print("        Download: https://www.hikrobotics.com/machinevision")
+    sys.exit(1)
 
 if _MVIMP_DIR not in sys.path:
     sys.path.insert(0, _MVIMP_DIR)

@@ -25,37 +25,98 @@ import numpy as np
 logger = logging.getLogger(__name__)
 
 # ═══════════════════════════════════════════════════════════════
-# MVS SDK setup (module-level)
+# MVS SDK setup (module-level) — auto-detect installation paths
 # ═══════════════════════════════════════════════════════════════
-_MVS_DIR = r"A:\Program Files\MVS"
-_MVIMP_DIR = os.path.join(_MVS_DIR, "Development", "Samples", "Python", "MvImport")
-_DLL_DIR = r"C:\Program Files (x86)\Common Files\MVS\Runtime\Win64_x64"
+
+def _find_mvs_sdk() -> tuple[str | None, str | None]:
+    r"""Auto-detect MVS SDK installation paths.
+
+    Detection order:
+      1. MVS_SDK_PATH 环境变量（最高优先级）
+      2. 常见安装盘符: A:, C:, D:, E: 下的 Program Files\MVS
+      3. 注册表 (HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall)
+
+    Returns:
+        (mvs_root_dir, dll_dir) — 两者都可能为 None 表示未找到。
+    """
+    # 1. 环境变量覆盖
+    env_path = os.environ.get("MVS_SDK_PATH", "")
+    if env_path and os.path.isdir(env_path):
+        mvimp = os.path.join(env_path, "Development", "Samples", "Python", "MvImport")
+        if os.path.isdir(mvimp):
+            # DLL 通常位于 Common Files 下，不随 MVS 安装盘符变化
+            dll_candidates = [
+                os.path.join(os.environ.get("ProgramFiles(x86)", r"C:\Program Files (x86)"),
+                             "Common Files", "MVS", "Runtime", "Win64_x64"),
+                os.path.join(os.environ.get("CommonProgramFiles(x86)", r"C:\Program Files (x86)\Common Files"),
+                             "MVS", "Runtime", "Win64_x64"),
+            ]
+            dll_dir = next((d for d in dll_candidates if os.path.isdir(d)), None)
+            return env_path, dll_dir
+
+    # 2. 常见安装位置探测
+    _DRIVES = ["A:", "C:", "D:", "E:"]
+    _DLL_CANDIDATES = [
+        r"{drive}\Program Files (x86)\Common Files\MVS\Runtime\Win64_x64",
+    ]
+
+    for drive in _DRIVES:
+        mvs_dir = os.path.join(drive, os.sep, "Program Files", "MVS")
+        mvimp_dir = os.path.join(mvs_dir, "Development", "Samples", "Python", "MvImport")
+        if os.path.isdir(mvimp_dir):
+            # 找对应的 DLL 目录
+            dll_dir = None
+            for dll_tmpl in _DLL_CANDIDATES:
+                candidate = dll_tmpl.format(drive=drive)
+                if os.path.isdir(candidate):
+                    dll_dir = candidate
+                    break
+            # DLL 目录可能在 C: 盘（即使 MVS 在其他盘）
+            if dll_dir is None:
+                for d in [
+                    r"C:\Program Files (x86)\Common Files\MVS\Runtime\Win64_x64",
+                ]:
+                    if os.path.isdir(d):
+                        dll_dir = d
+                        break
+            return mvs_dir, dll_dir
+
+    return None, None
+
+
+_MVS_DIR, _DLL_DIR = _find_mvs_sdk()
+_MVIMP_DIR = os.path.join(_MVS_DIR, "Development", "Samples", "Python", "MvImport") if _MVS_DIR else ""
 
 _sdk_available = False
 
-if _MVIMP_DIR not in sys.path:
-    sys.path.insert(0, _MVIMP_DIR)
+if _MVS_DIR and _DLL_DIR and os.path.isdir(_MVIMP_DIR):
+    if _MVIMP_DIR not in sys.path:
+        sys.path.insert(0, _MVIMP_DIR)
 
-# Must add DLL directory to PATH and loader BEFORE importing SDK classes
-os.environ["PATH"] = _DLL_DIR + ";" + os.environ.get("PATH", "")
-try:
-    os.add_dll_directory(_DLL_DIR)
-except AttributeError:
-    pass  # Python < 3.8
+    # Must add DLL directory to PATH and loader BEFORE importing SDK classes
+    os.environ["PATH"] = _DLL_DIR + ";" + os.environ.get("PATH", "")
+    try:
+        os.add_dll_directory(_DLL_DIR)
+    except AttributeError:
+        pass  # Python < 3.8
 
-try:
-    from MvCameraControl_class import (  # noqa: E402
-        MvCamera, MV_CC_DEVICE_INFO_LIST, MV_CC_DEVICE_INFO,
-        MV_FRAME_OUT, MV_CC_HB_DECODE_PARAM, MV_CC_PIXEL_CONVERT_PARAM_EX,
-        MV_ACCESS_Exclusive, MV_TRIGGER_MODE_OFF,
-        MV_GIGE_DEVICE, MV_USB_DEVICE, MV_GENTL_GIGE_DEVICE,
-        get_platform_functype,
-        PixelType_Gvsp_Mono8, PixelType_Gvsp_RGB8_Packed,
-        PixelType_Gvsp_Undefined,
-    )
-    _sdk_available = True
-except ImportError:
-    logger.warning("MVS SDK not available (non-Windows or MVS not installed). "
+    try:
+        from MvCameraControl_class import (  # noqa: E402
+            MvCamera, MV_CC_DEVICE_INFO_LIST, MV_CC_DEVICE_INFO,
+            MV_FRAME_OUT, MV_CC_HB_DECODE_PARAM, MV_CC_PIXEL_CONVERT_PARAM_EX,
+            MV_ACCESS_Exclusive, MV_TRIGGER_MODE_OFF,
+            MV_GIGE_DEVICE, MV_USB_DEVICE, MV_GENTL_GIGE_DEVICE,
+            get_platform_functype,
+            PixelType_Gvsp_Mono8, PixelType_Gvsp_RGB8_Packed,
+            PixelType_Gvsp_Undefined,
+        )
+        _sdk_available = True
+        logger.info(f"MVS SDK loaded from: {_MVS_DIR} (DLL: {_DLL_DIR})")
+    except ImportError:
+        logger.warning(f"MVS SDK not importable (found at {_MVS_DIR} but bindings failed). "
+                       "CameraController will report 'camera not found' on start().")
+else:
+    logger.warning("MVS SDK not available (install MVS or set MVS_SDK_PATH env var). "
                    "CameraController will report 'camera not found' on start().")
 
 # Pixel type constants for HB decode check

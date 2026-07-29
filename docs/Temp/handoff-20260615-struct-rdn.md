@@ -49,15 +49,15 @@ V2 样机管线从 HSV 偏振替换为结构张量+RDN+YOLOv8s：
 
 | 路径 | 说明 |
 |------|------|
-| `e:/code/codex/code/algae_image_v2/` | V2 项目根 |
-| `e:/code/codex/code/algae_image_v2/core_engine/config.py` | SKIP_RDN, DEFAULT_MODEL, PIPELINE_MAX_WIDTH, IENH params |
-| `e:/code/codex/code/algae_image_v2/backend/app/services/pipeline.py` | PipelineRunner（RDN+resize） |
-| `e:/code/codex/code/algae_image_v2/backend/app/main.py` | RDN 加载注入 |
-| `e:/code/codex/code/algae_image_v2/weights/rdn_polarization.pth` | RDN 权重（PSNR 62.46dB, ~2.5MB） |
-| `e:/code/codex/code/algae_image_v2/weights/best_v8s.pt` | YOLOv8s FMPD 5-class（~22MB） |
-| `e:/code/codex/code/algae_image_v2/frontend/src/stores/detect.js` | Pinia store（stop 可靠性） |
-| `e:/code/codex/code/algae_image_v2/frontend/src/views/LiveMonitor.vue` | 实时监测组件 |
-| `e:/code/codex/code/RDN_HSV_0526/README.md` | 5 组实验对比数据 |
+| `e:/code/algaeimage/code/algae_image_v2/` | V2 项目根 |
+| `e:/code/algaeimage/code/algae_image_v2/core_engine/config.py` | SKIP_RDN, DEFAULT_MODEL, PIPELINE_MAX_WIDTH, IENH params |
+| `e:/code/algaeimage/code/algae_image_v2/backend/app/services/pipeline.py` | PipelineRunner（RDN+resize） |
+| `e:/code/algaeimage/code/algae_image_v2/backend/app/main.py` | RDN 加载注入 |
+| `e:/code/algaeimage/code/algae_image_v2/weights/rdn_polarization.pth` | RDN 权重（PSNR 62.46dB, ~2.5MB） |
+| `e:/code/algaeimage/code/algae_image_v2/weights/best_v8s.pt` | YOLOv8s FMPD 5-class（~22MB） |
+| `e:/code/algaeimage/code/algae_image_v2/frontend/src/stores/detect.js` | Pinia store（stop 可靠性） |
+| `e:/code/algaeimage/code/algae_image_v2/frontend/src/views/LiveMonitor.vue` | 实时监测组件 |
+| `e:/code/algaeimage/code/RDN_HSV_0526/README.md` | 5 组实验对比数据 |
 | `A:/Anaconda_envs/envs/ican/python.exe` | conda 环境 Python |
 
 ---
@@ -69,7 +69,7 @@ V2 样机管线从 HSV 偏振替换为结构张量+RDN+YOLOv8s：
 python -c "import subprocess, os, signal; ..."
 
 # 2. 启动后端（1024px resize + RDN + YOLOv8s）
-cd e:/code/codex/code/algae_image_v2
+cd e:/code/algaeimage/code/algae_image_v2
 "A:/Anaconda_envs/envs/ican/python.exe" -m uvicorn backend.app.main:app --host 0.0.0.0 --port 8000
 
 # 3. 等待就绪（~15s RDN + YOLO 加载）

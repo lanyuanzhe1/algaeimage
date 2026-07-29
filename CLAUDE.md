@@ -33,7 +33,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ### 启动
 
 ```bash
-cd e:/code/codex/code/algae_image_v1
+cd e:/code/algaeimage/code/algae_image_v1
 python -m uvicorn backend.app.main:app --host 0.0.0.0 --port 8000
 # 或双击 run.bat
 ```
@@ -99,7 +99,7 @@ core_engine/ (纯Python库, 零框架依赖: numpy/PyTorch/cv2)
 ### 测试
 
 ```bash
-cd e:/code/codex/code/algae_image_v1
+cd e:/code/algaeimage/code/algae_image_v1
 python -m pytest tests/test_pipeline.py -v   # 核心引擎 (5 test classes)
 python -m pytest tests/test_frontend.py -v   # 前端HTML/JS结构 (2 test classes)
 ```
@@ -119,7 +119,7 @@ V2 面向 FMPD 5 类明场显微图像，管线更轻（跳过 RDN），已封�
 
 Windows（需要 GPU + conda ican）:
 ```bash
-cd e:/code/codex/code/algae_image_v2
+cd e:/code/algaeimage/code/algae_image_v2
 # Bash 中 conda activate 无效，用完整 Python 路径:
 "A:/Anaconda_envs/envs/ican/python.exe" desktop_launcher.py
 # 或: "A:/Anaconda_envs/envs/ican/python.exe" -m uvicorn backend.app.main:app --host 0.0.0.0 --port 8000
@@ -216,7 +216,7 @@ Vite dev server 自动代理 `/api` 和 `/static` 到 `127.0.0.1:8000`。
 **启动（3 步）**:
 ```bash
 # 1. 启动后端
-cd e:/code/codex/code/algae_image_v2
+cd e:/code/algaeimage/code/algae_image_v2
 python -m uvicorn backend.app.main:app --host 0.0.0.0 --port 8000
 
 # 2. 启动相机采集（5fps）
@@ -295,7 +295,7 @@ cd frontend && npm run build                        # 生产构建 → dist/
 ### 启动
 
 ```bash
-cd e:/code/codex/code/algae_guardian
+cd e:/code/algaeimage/code/algae_guardian
 python run.py                # 初始化数据库 + 加载模型
 uvicorn backend.app.main:app --host 0.0.0.0 --port 8000 --reload
 ```
@@ -336,7 +336,7 @@ RGB原图 → 偏振模拟(I0/I45/I90/I135) → RDN偏振重建 → I_enh增强 
 
 - 新平台页面: `frontend/index.html` (挂载到 `/app/`)
 - 旧监控面板: `backend/static/index.html` (挂载到 `/static/`)
-- 平台图片: `pic/` 目录 (映射到 `E:/code/codex/pic/`)
+- 平台图片: `pic/` 目录 (映射到 `E:/code/algaeimage/pic/`)
 - 技术文档: `项目文书/藻影知微_0508.md`
 
 ### 数据闭环
@@ -362,7 +362,7 @@ RGB原图 → 偏振模拟(I0/I45/I90/I135) → RDN偏振重建 → I_enh增强 
 
 HSV 色彩空间偏振模拟，性能远低于结构张量。但保留了**完整的 Docker 化训练环境**:
 - `Dockerfile` — NVIDIA PyTorch 基础镜像, CUDA 12.1, 清华 pip 镜像源
-- `docker-compose.yml` — GPU 透传, 8GB shm, 挂载 `E:/code/codex/datasets` 和 `E:/code/codex/results`
+- `docker-compose.yml` — GPU 透传, 8GB shm, 挂载 `E:/code/algaeimage/datasets` 和 `E:/code/algaeimage/results`
 - `deploy/run_all.py` — 全流程部署入口
 
 ### SPDRDN — 原始 RDN 研究 (独立 git 仓库)

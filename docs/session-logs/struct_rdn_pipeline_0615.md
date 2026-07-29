@@ -68,7 +68,7 @@ IENH_GAMMA = 0.35  # was 0.30
 ### 2. GPU 速度剖析
 
 ```bash
-cd e:/code/codex/code/algae_image_v2
+cd e:/code/algaeimage/code/algae_image_v2
 python -c "
 # 在三组分辨率下分别计时：偏振/ RDN/ I_enh/ YOLO
 # 2080×1540: polarization 0.92s, RDN 319.98s, I_enh 0.49s, YOLO 1.06s

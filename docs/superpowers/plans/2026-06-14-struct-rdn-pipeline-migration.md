@@ -22,7 +22,7 @@ The current file is the HSV implementation. Replace it entirely with V1's struct
 Copy the entire content of `code/algae_image_v1/core_engine/polarization_sim.py` to `code/algae_image_v2/core_engine/polarization_sim.py`. The file is at:
 
 ```
-e:\code\codex\code\algae_image_v1\core_engine\polarization_sim.py
+e:\code\algaeimage\code\algae_image_v1\core_engine\polarization_sim.py
 ```
 
 The key function is `simulate_polarization(rgb_image, polarization_strength=1.0, sigma=2.0)` which computes structure tensor, derives orientation/anisotropy, and applies Malus law to produce 4-channel output. Keep existing `hsv_polarization.py` untouched as fallback.
@@ -30,7 +30,7 @@ The key function is `simulate_polarization(rgb_image, polarization_strength=1.0,
 - [ ] **Step 2: Verify import still works**
 
 ```bash
-cd e:/code/codex/code/algae_image_v2
+cd e:/code/algaeimage/code/algae_image_v2
 python -c "from core_engine.polarization_sim import simulate_polarization; print('OK')"
 ```
 
@@ -75,7 +75,7 @@ IENH_GAMMA: float = 0.35   # V1 default
 - [ ] **Step 2: Verify config loads**
 
 ```bash
-cd e:/code/codex/code/algae_image_v2
+cd e:/code/algaeimage/code/algae_image_v2
 python -c "from core_engine.config import SKIP_RDN, DEFAULT_MODEL, IENH_ALPHA; print(f'SKIP_RDN={SKIP_RDN} MODEL={DEFAULT_MODEL} ALPHA={IENH_ALPHA}')"
 ```
 
@@ -148,7 +148,7 @@ Keep all other lines unchanged.
 - [ ] **Step 5: Verify PipelineRunner imports**
 
 ```bash
-cd e:/code/codex/code/algae_image_v2
+cd e:/code/algaeimage/code/algae_image_v2
 python -c "from backend.app.services.pipeline import PipelineRunner; print('OK')"
 ```
 
@@ -202,7 +202,7 @@ print(f"[Startup] Pipeline ready — Algae Image V2 (StructTensor+RDN, FMPD 5-cl
 - [ ] **Step 3: Verify startup logic**
 
 ```bash
-cd e:/code/codex/code/algae_image_v2
+cd e:/code/algaeimage/code/algae_image_v2
 python -c "
 from backend.app.config import RDN_WEIGHTS
 import os
@@ -266,7 +266,7 @@ Then in the `steps` list (after step 2 "偏振模拟"), add:
 - [ ] **Step 2: Verify visualization pipeline**
 
 ```bash
-cd e:/code/codex/code/algae_image_v2
+cd e:/code/algaeimage/code/algae_image_v2
 python -c "
 from backend.app.services.pipeline import PipelineRunner
 print('PipelineRunner.run_with_visualization ready')
@@ -292,11 +292,11 @@ git commit -m "feat: add RDN reconstruction visualization step"
 - [ ] **Step 1: Full startup test**
 
 ```bash
-cd e:/code/codex/code/algae_image_v2
+cd e:/code/algaeimage/code/algae_image_v2
 "A:/Anaconda_envs/envs/ican/python.exe" -c "
 import os, sys
 sys.path.insert(0, '.')
-os.chdir('e:/code/codex/code/algae_image_v2')
+os.chdir('e:/code/algaeimage/code/algae_image_v2')
 
 # Simulate startup
 from backend.app.config import RDN_WEIGHTS, resource_path
@@ -332,7 +332,7 @@ Expected: all stages pass without errors.
 - [ ] **Step 2: Start server and test single detect**
 
 ```bash
-cd e:/code/codex/code/algae_image_v2
+cd e:/code/algaeimage/code/algae_image_v2
 # Start server in background
 "A:/Anaconda_envs/envs/ican/python.exe" -m uvicorn backend.app.main:app --host 0.0.0.0 --port 8000 &
 # Wait for startup
@@ -359,7 +359,7 @@ No frontend code changes needed, but rebuild dist to pick up any stale cache fro
 - [ ] **Step 1: Build frontend**
 
 ```bash
-cd e:/code/codex/code/algae_image_v2/frontend
+cd e:/code/algaeimage/code/algae_image_v2/frontend
 export PATH="A:/Program Files/nodejs:$PATH"
 npm run build
 ```
@@ -367,7 +367,7 @@ npm run build
 - [ ] **Step 2: Force-add dist**
 
 ```bash
-cd e:/code/codex/code/algae_image_v2
+cd e:/code/algaeimage/code/algae_image_v2
 git add -f frontend/dist/
 git commit -m "build: refresh frontend dist for struct+RDN pipeline"
 ```

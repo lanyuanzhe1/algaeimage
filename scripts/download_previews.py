@@ -2,12 +2,12 @@ import os
 import sys
 
 # 添加 cloud_ssh.py 所在的路径
-sys.path.append(r"e:\code\codex\code\algae_guardian\cloud_training")
+sys.path.append(r"e:\code\algaeimage\code\algae_guardian\cloud_training")
 from cloud_ssh import CloudServer
 
 def main():
     remote_dir = "/data/lifewatch_yolo/yolo_results/lifewatch_v2_v8s_320/"
-    local_dir = r"e:\code\codex\pic\yolo_intermediate"
+    local_dir = r"e:\code\algaeimage\pic\yolo_intermediate"
     
     # 我们想要下载的关键词
     target_keywords = ["results.png", "train_batch", "val_batch"]

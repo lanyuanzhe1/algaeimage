@@ -7,7 +7,7 @@ HOST = "r3cw5phvxmwqeiehunt.funhpc.com"
 PORT = 30957
 USER = "root"
 PASSWORD = "ZWAL2OPnkyBOIVxw1AaXcfaFXCDD2sCv"
-LOCAL_DATA = Path(r"E:\code\codex\code\algae_guardian\data\fmpd_rdn_output")
+LOCAL_DATA = Path(r"E:\code\algaeimage\code\algae_guardian\data\fmpd_rdn_output")
 REMOTE_DATA = "/data/fmpd_rdn_output"
 ICAN_PYTHON = "/data/miniconda/envs/ican/bin/python"
 

@@ -133,7 +133,7 @@ RDN 去噪恢复。HSV 法则相反，RDN 反而有害。
 
 ```bash
 conda activate ican
-cd e:/code/codex/code/RDN_HSV_0526
+cd e:/code/algaeimage/code/RDN_HSV_0526
 
 # 实验 3: HSV 无 RDN (推荐用于 v2)
 python evaluate_pipeline_no_rdn.py

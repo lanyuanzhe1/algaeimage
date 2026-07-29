@@ -88,7 +88,7 @@ Vue3 使用 History Mode 路由（`/detect`, `/history` 等），浏览器直接
 ```bash
 # 启动 brainstorming visual companion (Node.js 24.14.0)
 PATH="/c/Users/HP/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin:$PATH"
-bash .../start-server.sh --project-dir e:/code/codex
+bash .../start-server.sh --project-dir e:/code/algaeimage
 # → http://localhost:56670 (后续 65109/... 因超时重建)
 
 # 写设计文档
@@ -103,7 +103,7 @@ docs/superpowers/plans/2026-06-11-demo-workflow.md
 # 节流: interval = 1.0 / fps; sleep(max(0, expected - elapsed))
 
 # 单帧冒烟测试
-cd e:/code/codex
+cd e:/code/algaeimage
 A:/Anaconda_envs/envs/ican/python.exe code/algae_image_v2/video_grabber.py \
     video/Video_20260611215520245.avi --once
 

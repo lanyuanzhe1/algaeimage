@@ -43,7 +43,7 @@ watch(() => store.liveMode, (val) => {
 
 ```bash
 # 1. Backend
-cd e:/code/codex/code/algae_image_v2
+cd e:/code/algaeimage/code/algae_image_v2
 A:/Anaconda_envs/envs/ican/python.exe -m uvicorn backend.app.main:app --host 0.0.0.0 --port 8000
 
 # 2. 相机采集（需先关闭 MVS 客户端）

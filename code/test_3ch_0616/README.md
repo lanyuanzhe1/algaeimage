@@ -75,7 +75,7 @@ corrected = clip( S0_norm × (1.0 - 0.5 × DoLP), 0, 255 )
 ## 运行
 
 ```bash
-cd e:/code/codex/code/test_3ch_0616
+cd e:/code/algaeimage/code/test_3ch_0616
 A:/Anaconda_envs/envs/ican/python.exe run.py
 ```
 

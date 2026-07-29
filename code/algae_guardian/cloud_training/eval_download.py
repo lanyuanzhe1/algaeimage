@@ -5,7 +5,7 @@ from pathlib import Path
 HOST = "r3cw5phvxmwqeiehunt.funhpc.com"; PORT = 30957
 USER = "root"; PASSWORD = "ZWAL2OPnkyBOIVxw1AaXcfaFXCDD2sCv"
 REMOTE_RESULTS = "/data/fmpd_rdn_output/yolo_results"
-LOCAL_RESULTS = Path(r"E:\code\codex\code\algae_guardian\data\fmpd_rdn_output\yolo_results")
+LOCAL_RESULTS = Path(r"E:\code\algaeimage\code\algae_guardian\data\fmpd_rdn_output\yolo_results")
 
 client = paramiko.SSHClient()
 client.set_missing_host_key_policy(paramiko.AutoAddPolicy())

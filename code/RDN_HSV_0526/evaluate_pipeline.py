@@ -27,10 +27,10 @@ from models import RDN
 from hsv_polarization import hsv_to_polarization
 
 # ── Config ────────────────────────────────────────────────────────
-FMPD_IMAGES = Path("E:/code/codex/code/algae_guardian/data/download/extracted/dataset/dataset")
-FMPD_LABELS = Path("E:/code/codex/code/algae_guardian/data/fmpd_rdn_output/labels")
+FMPD_IMAGES = Path("E:/code/algaeimage/code/algae_guardian/data/download/extracted/dataset/dataset")
+FMPD_LABELS = Path("E:/code/algaeimage/code/algae_guardian/data/fmpd_rdn_output/labels")
 RDN_WEIGHTS = BASE / "checkpoint" / "best.pth"
-YOLO_WEIGHTS = Path("E:/code/codex/code/Polar_sim_0520/output/yolo_training_hsv/v8l_hsv/weights/best.pt")
+YOLO_WEIGHTS = Path("E:/code/algaeimage/code/Polar_sim_0520/output/yolo_training_hsv/v8l_hsv/weights/best.pt")
 
 CLASS_NAMES = ["Other-phytoplankton", "Non-phytoplankton",
                "Woronichinia", "Spiroides", "Dinobryon"]

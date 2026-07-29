@@ -40,10 +40,10 @@ ssh -p 44448 root@tssjfkari2ofchucsnow.deepln.com
 - [ ] **Step 1: 创建所有目录**
 
 ```bash
-mkdir -p e:/code/codex/code/Polar_sim_0522/image_processing
-mkdir -p e:/code/codex/code/Polar_sim_0522/ml/models
-mkdir -p e:/code/codex/code/Polar_sim_0522/deploy
-mkdir -p e:/code/codex/code/Polar_sim_0522/docs
+mkdir -p e:/code/algaeimage/code/Polar_sim_0522/image_processing
+mkdir -p e:/code/algaeimage/code/Polar_sim_0522/ml/models
+mkdir -p e:/code/algaeimage/code/Polar_sim_0522/deploy
+mkdir -p e:/code/algaeimage/code/Polar_sim_0522/docs
 ```
 
 - [ ] **Step 2: 写出 `__init__.py` 文件**
@@ -79,14 +79,14 @@ git commit -m "feat: create Polar_sim_0522 directory structure"
 - [ ] **Step 1: 复制文件**
 
 ```bash
-cp e:/code/codex/code/Polar_sim_0520/hsv_polarization.py e:/code/codex/code/Polar_sim_0522/hsv_polarization.py
+cp e:/code/algaeimage/code/Polar_sim_0520/hsv_polarization.py e:/code/algaeimage/code/Polar_sim_0522/hsv_polarization.py
 ```
 
 - [ ] **Step 2: 验证导入可用**
 
 ```bash
 A:/Anaconda_envs/envs/ican/python -c "
-import sys; sys.path.insert(0, 'e:/code/codex/code/Polar_sim_0522')
+import sys; sys.path.insert(0, 'e:/code/algaeimage/code/Polar_sim_0522')
 from hsv_polarization import hsv_to_polarization, batch_simulate_hsv
 print('Import OK: hsv_to_polarization, batch_simulate_hsv')
 "
@@ -113,7 +113,7 @@ git commit -m "feat: copy hsv_polarization.py from Polar_sim_0520"
 - [ ] **Step 1: 复制文件**
 
 ```bash
-cp e:/code/codex/code/Polar_sim_0520/image_processing/polarization.py e:/code/codex/code/Polar_sim_0522/image_processing/polarization.py
+cp e:/code/algaeimage/code/Polar_sim_0520/image_processing/polarization.py e:/code/algaeimage/code/Polar_sim_0522/image_processing/polarization.py
 ```
 
 - [ ] **Step 2: 验证导入**
@@ -121,7 +121,7 @@ cp e:/code/codex/code/Polar_sim_0520/image_processing/polarization.py e:/code/co
 ```bash
 A:/Anaconda_envs/envs/ican/python -c "
 import sys, os; os.environ['KMP_DUPLICATE_LIB_OK'] = 'TRUE'
-sys.path.insert(0, 'e:/code/codex/code/Polar_sim_0522')
+sys.path.insert(0, 'e:/code/algaeimage/code/Polar_sim_0522')
 from image_processing.polarization import PolarizationProcessor
 pp = PolarizationProcessor()
 print('Import OK:', type(pp).__name__)
@@ -149,7 +149,7 @@ git commit -m "feat: copy polarization.py from Polar_sim_0520"
 - [ ] **Step 1: 复制文件**
 
 ```bash
-cp e:/code/codex/code/Polar_sim_0520/image_processing/enhancement.py e:/code/codex/code/Polar_sim_0522/image_processing/enhancement.py
+cp e:/code/algaeimage/code/Polar_sim_0520/image_processing/enhancement.py e:/code/algaeimage/code/Polar_sim_0522/image_processing/enhancement.py
 ```
 
 - [ ] **Step 2: 验证导入**
@@ -157,7 +157,7 @@ cp e:/code/codex/code/Polar_sim_0520/image_processing/enhancement.py e:/code/cod
 ```bash
 A:/Anaconda_envs/envs/ican/python -c "
 import sys, os; os.environ['KMP_DUPLICATE_LIB_OK'] = 'TRUE'
-sys.path.insert(0, 'e:/code/codex/code/Polar_sim_0522')
+sys.path.insert(0, 'e:/code/algaeimage/code/Polar_sim_0522')
 from image_processing.enhancement import ImageEnhancer
 ie = ImageEnhancer()
 print('Import OK:', type(ie).__name__)
@@ -185,7 +185,7 @@ git commit -m "feat: copy enhancement.py from Polar_sim_0520"
 - [ ] **Step 1: 复制文件**
 
 ```bash
-cp e:/code/codex/code/Polar_sim_0520/ml/reconstructor.py e:/code/codex/code/Polar_sim_0522/ml/reconstructor.py
+cp e:/code/algaeimage/code/Polar_sim_0520/ml/reconstructor.py e:/code/algaeimage/code/Polar_sim_0522/ml/reconstructor.py
 ```
 
 - [ ] **Step 2: 验证导入**
@@ -193,7 +193,7 @@ cp e:/code/codex/code/Polar_sim_0520/ml/reconstructor.py e:/code/codex/code/Pola
 ```bash
 A:/Anaconda_envs/envs/ican/python -c "
 import sys, os; os.environ['KMP_DUPLICATE_LIB_OK'] = 'TRUE'
-sys.path.insert(0, 'e:/code/codex/code/Polar_sim_0522')
+sys.path.insert(0, 'e:/code/algaeimage/code/Polar_sim_0522')
 from ml.reconstructor import RDN, DenseLayer, RDB, PolarizationReconstructor
 print('Import OK: RDN, PolarizationReconstructor')
 "
@@ -339,7 +339,7 @@ class CloudServer:
 
 ```bash
 A:/Anaconda_envs/envs/ican/python -c "
-import sys; sys.path.insert(0, 'e:/code/codex/code/Polar_sim_0522')
+import sys; sys.path.insert(0, 'e:/code/algaeimage/code/Polar_sim_0522')
 from deploy.cloud_server import CloudServer, SSHResult
 print('Import OK')
 "
@@ -461,8 +461,8 @@ if __name__ == "__main__":
 
 ```bash
 A:/Anaconda_envs/envs/ican/python -c "
-import sys; sys.path.insert(0, 'e:/code/codex/code/Polar_sim_0522')
-import ast; ast.parse(open('e:/code/codex/code/Polar_sim_0522/deploy/setup_env.py').read())
+import sys; sys.path.insert(0, 'e:/code/algaeimage/code/Polar_sim_0522')
+import ast; ast.parse(open('e:/code/algaeimage/code/Polar_sim_0522/deploy/setup_env.py').read())
 print('Syntax OK')
 "
 ```
@@ -508,7 +508,7 @@ SERVER_PORT = 30000
 SERVER_USER = "root"
 SERVER_PASSWORD = "CHANGE_ME"
 
-LOCAL_DATA_DIR = Path("E:/code/codex/code/algae_guardian/data/Flowcam_images_training_split_metadata"
+LOCAL_DATA_DIR = Path("E:/code/algaeimage/code/algae_guardian/data/Flowcam_images_training_split_metadata"
                       "/Flowcam_images_training_split_metadata")
 LOCAL_PROJECT = Path(__file__).resolve().parent.parent
 BASE_DIR = "/data/lifewatch_hsv"
@@ -579,7 +579,7 @@ if __name__ == "__main__":
 
 ```bash
 A:/Anaconda_envs/envs/ican/python -c "
-import ast; ast.parse(open('e:/code/codex/code/Polar_sim_0522/deploy/upload_all.py').read())
+import ast; ast.parse(open('e:/code/algaeimage/code/Polar_sim_0522/deploy/upload_all.py').read())
 print('Syntax OK')
 "
 ```
@@ -832,7 +832,7 @@ if __name__ == "__main__":
 
 ```bash
 A:/Anaconda_envs/envs/ican/python -c "
-import ast; print('Syntax OK' if ast.parse(open('e:/code/codex/code/Polar_sim_0522/ml/train_rdn.py').read()) else '')
+import ast; print('Syntax OK' if ast.parse(open('e:/code/algaeimage/code/Polar_sim_0522/ml/train_rdn.py').read()) else '')
 "
 ```
 
@@ -1123,7 +1123,7 @@ if __name__ == "__main__":
 
 ```bash
 A:/Anaconda_envs/envs/ican/python -c "
-import ast; ast.parse(open('e:/code/codex/code/Polar_sim_0522/deploy/run_pipeline.py').read())
+import ast; ast.parse(open('e:/code/algaeimage/code/Polar_sim_0522/deploy/run_pipeline.py').read())
 print('Syntax OK')
 "
 ```
@@ -1244,7 +1244,7 @@ if __name__ == "__main__":
 
 ```bash
 A:/Anaconda_envs/envs/ican/python -c "
-import ast; ast.parse(open('e:/code/codex/code/Polar_sim_0522/deploy/train_yolo.py').read())
+import ast; ast.parse(open('e:/code/algaeimage/code/Polar_sim_0522/deploy/train_yolo.py').read())
 print('Syntax OK')
 "
 ```
@@ -1380,7 +1380,7 @@ if __name__ == "__main__":
 
 ```bash
 A:/Anaconda_envs/envs/ican/python -c "
-import ast; ast.parse(open('e:/code/codex/code/Polar_sim_0522/deploy/run_all.py').read())
+import ast; ast.parse(open('e:/code/algaeimage/code/Polar_sim_0522/deploy/run_all.py').read())
 print('Syntax OK')
 "
 ```
@@ -1401,10 +1401,10 @@ git commit -m "feat: add master orchestrator for full pipeline"
 - [ ] **Step 1: 本地测试 RDN 训练（50 张，10 epoch）**
 
 ```bash
-cd e:/code/codex/code/Polar_sim_0522 && \
+cd e:/code/algaeimage/code/Polar_sim_0522 && \
 A:/Anaconda_envs/envs/ican/python ml/train_rdn.py \
-    --image-dir "E:/code/codex/code/algae_guardian/data/Flowcam_images_training_split_metadata/Flowcam_images_training_split_metadata/Flowcam_images_training" \
-    --output e:/code/codex/code/Polar_sim_0522/ml/models/rdn_test.pth \
+    --image-dir "E:/code/algaeimage/code/algae_guardian/data/Flowcam_images_training_split_metadata/Flowcam_images_training_split_metadata/Flowcam_images_training" \
+    --output e:/code/algaeimage/code/Polar_sim_0522/ml/models/rdn_test.pth \
     --num-samples 50 --epochs 10 --batch 8 --lr 1e-4
 ```
 
@@ -1415,7 +1415,7 @@ A:/Anaconda_envs/envs/ican/python ml/train_rdn.py \
 ```bash
 A:/Anaconda_envs/envs/ican/python -c "
 import sys, os; os.environ['KMP_DUPLICATE_LIB_OK'] = 'TRUE'
-sys.path.insert(0, 'e:/code/codex/code/Polar_sim_0522')
+sys.path.insert(0, 'e:/code/algaeimage/code/Polar_sim_0522')
 import numpy as np, cv2
 from pathlib import Path
 from hsv_polarization import hsv_to_polarization
@@ -1424,7 +1424,7 @@ from image_processing.enhancement import ImageEnhancer
 from ml.reconstructor import PolarizationReconstructor
 
 # Load 10 test images
-img_dir = Path('E:/code/codex/code/algae_guardian/data/Flowcam_images_training_split_metadata'
+img_dir = Path('E:/code/algaeimage/code/algae_guardian/data/Flowcam_images_training_split_metadata'
                '/Flowcam_images_training_split_metadata/Flowcam_images_training')
 imgs = list(img_dir.rglob('*.jpg'))[:10]
 
@@ -1469,7 +1469,7 @@ def _norm_to_uint8(x):
 - [ ] **Step 3: 清理测试产物**
 
 ```bash
-rm -f e:/code/codex/code/Polar_sim_0522/ml/models/rdn_test.pth
+rm -f e:/code/algaeimage/code/Polar_sim_0522/ml/models/rdn_test.pth
 ```
 
 - [ ] **Step 4: Commit**
@@ -1488,7 +1488,7 @@ git add -A && git commit -m "feat: local integration test passed"
 # 修改 SERVER_HOST, SERVER_PORT, SERVER_PASSWORD
 
 # === 步骤 2: 配置服务器环境 ===
-cd e:/code/codex/code/Polar_sim_0522
+cd e:/code/algaeimage/code/Polar_sim_0522
 python deploy/setup_env.py
 
 # === 步骤 3: 上传数据+代码 ===

@@ -14,6 +14,6 @@
   "total_gt_boxes": 3162,
   "avg_time_s": 1.063,
   "device": "cuda",
-  "yolo_weights": "E:\\code\\codex\\code\\algae_guardian\\data\\fmpd_rdn_output\\yolo_results\\v8l_upgrade\\weights\\best.pt",
+  "yolo_weights": "E:\\code\\algaeimage\\code\\algae_guardian\\data\\fmpd_rdn_output\\yolo_results\\v8l_upgrade\\weights\\best.pt",
   "note": "Structure tensor polarization (no RDN, no noise). Uses structure-tensor-trained YOLOv8l weights (trained on struct+RDN+I_enh images). Compare with evaluate_pipeline_no_rdn.py (HSV variant) and evaluate_pipeline.py (struct+RDN)."
 }

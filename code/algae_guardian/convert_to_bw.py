@@ -49,8 +49,8 @@ def convert_to_grayscale(input_dir, output_dir):
 
 if __name__ == "__main__":
     # 输入路径
-    IN_DIR = r"e:\code\codex\code\algae_guardian\data\fmpd_download\extracted\dataset\dataset"
+    IN_DIR = r"e:\code\algaeimage\code\algae_guardian\data\fmpd_download\extracted\dataset\dataset"
     # 输出路径（同级目录下的 dataset_bw）
-    OUT_DIR = r"e:\code\codex\code\algae_guardian\data\fmpd_download\extracted\dataset\dataset_bw"
+    OUT_DIR = r"e:\code\algaeimage\code\algae_guardian\data\fmpd_download\extracted\dataset\dataset_bw"
     
     convert_to_grayscale(IN_DIR, OUT_DIR)

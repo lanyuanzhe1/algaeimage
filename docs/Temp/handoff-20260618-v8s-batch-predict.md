@@ -19,7 +19,7 @@ v8s_baseline 训练是 2026-05-08 在云 GPU（RTX 5060 Ti, `xnvsn4npo7blo10hunt
 `pic/pic_0616/batch_predict.py` — 调用 YOLO predict，对 293 张图批量输出。
 
 ```bash
-cd e:/code/codex/pic/pic_0616
+cd e:/code/algaeimage/pic/pic_0616
 KMP_DUPLICATE_LIB_OK=TRUE "A:/Anaconda_envs/envs/ican/python.exe" batch_predict.py
 ```
 

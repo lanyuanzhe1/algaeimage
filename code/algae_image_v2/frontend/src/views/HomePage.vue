@@ -3,9 +3,9 @@
     <!-- ═══ Top Bar ═══ -->
     <header class="topbar">
       <div class="brand">
-        <div class="brand-mark">藻</div>
+        <div class="brand-mark">微</div>
         <div>
-          <h1>藻影卫士有害藻华早期预警平台</h1>
+          <h1>微险先知水下微生物监测引领者</h1>
           <p class="subtitle">偏振暗场显微成像 · YOLO识别计数 · 环境因子融合 · <strong>数据闭环</strong></p>
         </div>
       </div>
@@ -33,7 +33,7 @@
     <section class="metrics">
       <div class="metric"><span>检测总数</span><strong>2,847</strong><small>累计 · 5类FMPD</small></div>
       <div class="metric"><span>今日检测</span><strong>{{ statsData.today_count || 326 }}</strong><small>帧 · 藻种识别</small></div>
-      <div class="metric"><span>高危预警</span><strong style="color:#dc2626">{{ statsData.risk_distribution?.high || 12 }}</strong><small>需立即关注</small></div>
+      <div class="metric"><span>高危预警</span><strong style="color:#dc2626">{{ statsData.risk_distribution?.high || 170 }}</strong><small>需立即关注</small></div>
       <div class="metric"><span>平均 Q 分</span><strong>0.724</strong><small>图像质量 · 稳定</small></div>
       <div class="metric"><span>有效 FPS</span><strong>2.8</strong><small>处理帧率 · GPU</small></div>
     </section>

@@ -463,7 +463,7 @@ table tbody tr:last-child td{border-bottom:none}
 
 - [ ] **Step 2: Verify CSS file was written**
 
-Run: `wc -l e:/code/codex/code/algae_image_v1/frontend/css/style.css`
+Run: `wc -l e:/code/algaeimage/code/algae_image_v1/frontend/css/style.css`
 Expected: ~350 lines
 
 - [ ] **Step 3: Commit**
@@ -917,7 +917,7 @@ Write `code/algae_image_v1/frontend/index.html`:
 
 Run the following check:
 ```bash
-cd e:/code/codex/code/algae_image_v1/frontend && grep -oP 'id="[^"]*"' index.html | sort
+cd e:/code/algaeimage/code/algae_image_v1/frontend && grep -oP 'id="[^"]*"' index.html | sort
 ```
 Expected output must include all IDs referenced by detection.js and dashboard.js:
 `uploadZone`, `fileInput`, `folderInput`, `btnSelectFolder`, `btnSingleDetect`, `btnBatchDetect`, `fileCountLabel`, `previewImage`, `progressWrap`, `progressFill`, `progressText`, `resultEmpty`, `resultContent`, `resultImage`, `resultMeta`, `detectList`, `resultTime`, `statTotal`, `statToday`, `statHighRisk`, `chartClassDist`, `chartRiskDist`, `recentDetections`, `historyTableBody`, `historyPagination`, `resultPanel`
@@ -1195,7 +1195,7 @@ async function apiRequest(url, options) {
 
 - [ ] **Step 2: Verify the file saves without syntax errors**
 
-Run: `node --check e:/code/codex/code/algae_image_v1/frontend/js/app.js`
+Run: `node --check e:/code/algaeimage/code/algae_image_v1/frontend/js/app.js`
 Expected: No output (success)
 
 - [ ] **Step 3: Commit**
@@ -1343,7 +1343,7 @@ Co-Authored-By: Claude Opus 4.7 <noreply@anthropic.com>"
 - [ ] **Step 1: Start the backend server**
 
 ```bash
-cd e:/code/codex/code/algae_image_v1 && python -m uvicorn backend.app.main:app --host 0.0.0.0 --port 8000 &
+cd e:/code/algaeimage/code/algae_image_v1 && python -m uvicorn backend.app.main:app --host 0.0.0.0 --port 8000 &
 ```
 Wait 3 seconds for server to start.
 

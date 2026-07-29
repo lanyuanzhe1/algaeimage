@@ -46,7 +46,7 @@ EOF
     print(stderr.read().decode())
     
     print("Downloading zip...")
-    local_dir = r"e:\code\codex\lifewatch_raw_samples"
+    local_dir = r"e:\code\algaeimage\lifewatch_raw_samples"
     os.makedirs(local_dir, exist_ok=True)
     sftp = client.open_sftp()
     sftp.get("/tmp/img500.zip", os.path.join(local_dir, "img500.zip"))

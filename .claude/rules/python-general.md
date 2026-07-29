@@ -20,7 +20,7 @@ paths: code/**/*.py
 ## Testing
 
 ```bash
-cd e:/code/codex/code/algae_image_v1
+cd e:/code/algaeimage/code/algae_image_v1
 python -m pytest tests/test_pipeline.py -v   # Core engine (5 test classes)
 python -m pytest tests/test_frontend.py -v   # Frontend HTML/JS structure
 ```

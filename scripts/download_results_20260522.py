@@ -3,7 +3,7 @@ import sys
 from pathlib import Path
 
 # 添加 cloud_ssh.py 所在的路径
-sys.path.append(r"e:\code\codex\code\algae_guardian\cloud_training")
+sys.path.append(r"e:\code\algaeimage\code\algae_guardian\cloud_training")
 from cloud_ssh import CloudServer
 
 def download_folder_contents(server, remote_dir, local_dir):
@@ -34,7 +34,7 @@ def main():
     remote_train_logs_dir = "/data/lifewatch_yolo/train"
     
     # 制定带日期的本地目录
-    local_base_dir = r"E:\code\codex\results\yolo_results_20260522"
+    local_base_dir = r"E:\code\algaeimage\results\yolo_results_20260522"
     
     os.makedirs(local_base_dir, exist_ok=True)
 

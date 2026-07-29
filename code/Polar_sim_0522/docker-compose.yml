@@ -25,8 +25,8 @@ services:
     # 外挂真实本地与云端目录，免去将几十G的数据打进镜像：
     volumes:
       # 挂载您的本地数据集源 (宿主机绝对路径映射到容器内 /app/data)
-      - E:/code/codex/datasets:/app/data
+      - E:/code/algaeimage/datasets:/app/data
       # 挂载训练结果保存路径 (宿主机绝对路径映射到容器内 /app/results)
-      - E:/code/codex/results:/app/results
+      - E:/code/algaeimage/results:/app/results
     # 默认启动命令：进入交互，以便手动执行分步训练
     command: /bin/bash

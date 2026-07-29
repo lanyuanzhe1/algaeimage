@@ -95,7 +95,7 @@ def suppress_backscatter(S0, DoLP, strength=0.5):
 ### RDN 分析
 
 ```bash
-cd e:/code/codex
+cd e:/code/algaeimage
 git checkout -b rdn-analysis HEAD  # 基于 v2-platform
 ```
 

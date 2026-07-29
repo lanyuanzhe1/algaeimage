@@ -3,8 +3,8 @@ import matplotlib.pyplot as plt
 import os
 
 # 读取 CSV
-csv_path = r"e:\code\codex\pic\yolo_intermediate\results.csv"
-output_path = r"e:\code\codex\pic\yolo_intermediate\training_curves.png"
+csv_path = r"e:\code\algaeimage\pic\yolo_intermediate\results.csv"
+output_path = r"e:\code\algaeimage\pic\yolo_intermediate\training_curves.png"
 
 df = pd.read_csv(csv_path)
 

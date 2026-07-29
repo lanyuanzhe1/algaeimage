@@ -18,8 +18,8 @@ OUTPUT = BASE / "output"
 TRAIN_DIR = OUTPUT / "yolo_training_hsv"
 DATASET_YAML = TRAIN_DIR / "dataset.yaml"
 HSV_INPUT = OUTPUT / "yolo_input_hsv"
-STRUCT_INPUT = Path("E:/code/codex/code/algae_guardian/data/fmpd_rdn_output/images")
-GT_LABELS = Path("E:/code/codex/code/algae_guardian/data/fmpd_rdn_output/labels")
+STRUCT_INPUT = Path("E:/code/algaeimage/code/algae_guardian/data/fmpd_rdn_output/images")
+GT_LABELS = Path("E:/code/algaeimage/code/algae_guardian/data/fmpd_rdn_output/labels")
 
 CLASS_NAMES = ["Other-phytoplankton", "Non-phytoplankton",
                "Woronichinia", "Spiroides", "Dinobryon"]
@@ -77,7 +77,7 @@ def step2_detect_and_eval():
     print(f"\n{'='*55}\nSTEP 2: Evaluate both models\n{'='*55}")
 
     hsv_model_path = TRAIN_DIR / "v8l_hsv" / "weights" / "best.pt"
-    struct_model_path = Path("E:/code/codex/code/algae_guardian/data/fmpd_rdn_output/yolo_results/v8l_upgrade/weights/best.pt")
+    struct_model_path = Path("E:/code/algaeimage/code/algae_guardian/data/fmpd_rdn_output/yolo_results/v8l_upgrade/weights/best.pt")
 
     if not hsv_model_path.exists():
         print(f"HSV model not found at {hsv_model_path}, trying last.pt")

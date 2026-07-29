@@ -115,7 +115,7 @@ if not os.path.isdir(FRONTEND_DIR):
 # Serve frontend: assets at /assets, SPA fallback at /app/*
 _assets_dir = os.path.join(FRONTEND_DIR, "assets")
 if os.path.isdir(_assets_dir):
-    app.mount("/assets", StaticFiles(directory=_assets_dir), name="assets")
+    app.mount("/app/assets", StaticFiles(directory=_assets_dir), name="assets")
 
 from fastapi.responses import FileResponse
 _index_html = os.path.join(FRONTEND_DIR, "index.html")

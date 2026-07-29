@@ -4,7 +4,7 @@ from pathlib import Path
 
 HOST = "r3cw5phvxmwqeiehunt.funhpc.com"; PORT = 30957
 USER = "root"; PASSWORD = "ZWAL2OPnkyBOIVxw1AaXcfaFXCDD2sCv"
-LOCAL = Path(r"E:\code\codex\code\algae_guardian\data\fmpd_rdn_output")
+LOCAL = Path(r"E:\code\algaeimage\code\algae_guardian\data\fmpd_rdn_output")
 REMOTE = "/data/fmpd_rdn_output"
 
 client = paramiko.SSHClient()

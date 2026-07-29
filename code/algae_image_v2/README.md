@@ -19,7 +19,7 @@ FMPD 明场显微藻类智能检测系统。基于 HSV 偏振模拟与 YOLO 深�
 
 ```bash
 conda activate ican
-cd e:/code/codex/code/algae_image_v2
+cd e:/code/algaeimage/code/algae_image_v2
 python -m uvicorn backend.app.main:app --host 0.0.0.0 --port 8000
 ```
 

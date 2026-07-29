@@ -13,8 +13,8 @@ Two scripts at repo root, double-clickable in Explorer. Zero dependency on Claud
 
 | Script | Location | What it does |
 |--------|----------|--------------|
-| `start.bat` | `e:/code/codex/start.bat` | Kill stale processes → start uvicorn in new window → wait for ready → open Firefox |
-| `stop.bat` | `e:/code/codex/stop.bat` | Kill all Python + Firefox processes |
+| `start.bat` | `e:/code/algaeimage/start.bat` | Kill stale processes → start uvicorn in new window → wait for ready → open Firefox |
+| `stop.bat` | `e:/code/algaeimage/stop.bat` | Kill all Python + Firefox processes |
 
 **How to use:** Simply tell the user to double-click `start.bat` / `stop.bat` in File Explorer.
 
@@ -36,7 +36,7 @@ Two scripts at repo root, double-clickable in Explorer. Zero dependency on Claud
 
 ### Key facts
 
-- **Project root**: `e:/code/codex/code/algae_image_v2`
+- **Project root**: `e:/code/algaeimage/code/algae_image_v2`
 - **Python**: `"A:/Anaconda_envs/envs/ican/python.exe"` (conda `ican`; `conda activate` does not work in Git Bash)
 - **Entry point**: uvicorn directly — NEVER use `desktop_launcher.py` (it opens default browser = Edge)
 - **Browser**: Firefox ONLY — `"C:/Program Files/Mozilla Firefox/firefox.exe"`
@@ -51,7 +51,7 @@ Two scripts at repo root, double-clickable in Explorer. Zero dependency on Claud
 2. If BUSY, kill processes first.
 3. Launch in background:
    ```bash
-   cd e:/code/codex/code/algae_image_v2 && "A:/Anaconda_envs/envs/ican/python.exe" -m uvicorn backend.app.main:app --host 0.0.0.0 --port 8000
+   cd e:/code/algaeimage/code/algae_image_v2 && "A:/Anaconda_envs/envs/ican/python.exe" -m uvicorn backend.app.main:app --host 0.0.0.0 --port 8000
    ```
 4. Wait 5s, check output for `"Application startup complete"`.
 5. Open Firefox:

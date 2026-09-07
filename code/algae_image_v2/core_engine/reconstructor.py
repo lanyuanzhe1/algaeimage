@@ -147,7 +147,7 @@ def load_rdn_model(weights_path: str, device: str = "cpu") -> "nn.Module":
 
 
 def reconstruct(model: "nn.Module", I_channels: np.ndarray,
-                device: str = "cpu") -> np.ndarray:
+                device: str = "gpu") -> np.ndarray:
     """Run RDN reconstruction on 4-channel polarization input.
 
     Args:

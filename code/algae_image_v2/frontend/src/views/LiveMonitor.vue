@@ -231,7 +231,7 @@ async function handleStartCamera() {
     }
   } catch (e) {
     state.value = 'error'
-    errorMsg.value = e.response?.data?.detail || '启动失败，请检查相机连接'
+    errorMsg.value = e.response?.data?.detail || ('启动失败: ' + (e.message || '未知错误'))
   }
 }
 

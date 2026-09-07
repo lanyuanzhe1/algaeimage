@@ -476,13 +476,25 @@ class CameraController:
             return {"status": "error", "detail": "MVS SDK not available"}
 
         if self._dev_info is None:
-            return {"status": "error", "detail": "No camera found"}
+            # Retry enumeration — camera may have been released since __init__
+            logger.info("No device cached, retrying enumeration...")
+            deviceList = MV_CC_DEVICE_INFO_LIST()
+            tlayer = MV_GIGE_DEVICE | MV_USB_DEVICE
+            ret = MvCamera.MV_CC_EnumDevices(tlayer, deviceList)
+            if ret == 0 and deviceList.nDeviceNum > 0:
+                self._dev_info = cast(
+                    deviceList.pDeviceInfo[0], POINTER(MV_CC_DEVICE_INFO)
+                ).contents
+                logger.info(f"Retry found {deviceList.nDeviceNum} device(s)")
+            else:
+                return {"status": "error",
+                        "detail": "未检测到相机。请确认：1) MVS客户端已关闭 2) 网线已连接 3) 相机已通电"}
 
         if self._pipeline is None:
             return {"status": "error", "detail": "Pipeline not configured"}
 
         if self._running:
-            return {"status": "error", "detail": "Already running"}
+            return {"status": "started", "detail": "already active"}
 
         # ── Create handle + open ─────────────────────────────────
         self._cam = MvCamera()
